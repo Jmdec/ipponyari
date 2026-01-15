@@ -1,0 +1,28 @@
+{
+  "id": "ipponyari-santa-rosa-ordering",
+  "theme_color": "#8B0000",
+  "background_color": "#2B0000",
+  "icons": [
+    {
+      "purpose": "maskable",
+      "sizes": "512x512",
+      "src": "icon512_maskable.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "any",
+      "sizes": "512x512",
+      "src": "icon512_rounded.png",
+      "type": "image/png"
+    }
+  ],
+  "orientation": "any",
+  "display": "standalone",
+  "dir": "auto",
+  "lang": "en-US",
+  "name": "Ipponyari Santa Rosa",
+  "short_name": "Ipponyari",
+  "start_url": "/",
+  "scope": "/",
+  "description": "Experience authentic Japanese dining with Ipponyari Santa Rosa."
+}
