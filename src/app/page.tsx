@@ -11,24 +11,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
       <HeroSection />
-  <CTASection />
-      {/* Featured Menu Section */}
+      <CTASection />
       <FeaturedMenu />
       <TestimonialsSection />
-           <BlogSection />
-      {/* About Preview Section */}
+      <BlogSection />
       <AboutPreview />
-
-      {/* Testimonials Section */}
-
-
-      {/* Blog Section */}
- 
-
-      {/* CTA Section */}
-    
     </div>
   )
 }

@@ -153,24 +153,6 @@ const Header = () => {
             </div>
           </Link>
 
-          {/* Mobile Quick Nav Icons */}
-          <div className="flex lg:hidden items-center gap-2 ml-2">
-            {allNav.slice(0, 3).map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`p-2 rounded-lg transition-all duration-300 ${
-                  isActivePage(item.href)
-                    ? "bg-[#dc143c] text-white shadow-md"
-                    : "text-gray-600 hover:bg-[#dc143c]/10 hover:text-[#dc143c]"
-                }`}
-                title={item.name}
-              >
-                <item.icon className="h-5 w-5" />
-              </Link>
-            ))}
-          </div>
-
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-1">
             {allNav.map((item) => (
@@ -351,9 +333,9 @@ const Header = () => {
               <SheetContent side="right" className="w-[280px] sm:w-[320px] bg-white border-l border-gray-200 p-0">
                 <div className="flex flex-col h-full">
                   {/* Mobile Menu Header */}
-                  <div className="flex items-center space-x-3 p-4 border-b border-gray-100 bg-gray-50">
-                    <div className="relative w-12 h-12 overflow-hidden flex-shrink-0">
-                      <Image src="/logo.png" alt="Ipponyari Logo" fill className="object-contain" />
+                  <div className="flex items-center space-x-3 px-4 border-b border-gray-100 bg-gray-50">
+                    <div className="relative w-20 h-20 overflow-hidden flex-shrink-0">
+                      <Image src="/logoippon.png" alt="Ipponyari Logo" fill className="object-contain" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h2 className="font-bold text-gray-900 text-sm">Ipponyari</h2>
@@ -397,54 +379,6 @@ const Header = () => {
                         ))}
                       </div>
                     </nav>
-                  </div>
-
-                  {/* Mobile Menu Footer */}
-                  <div className="border-t border-gray-100 p-4 space-y-3 bg-gray-50">
-                    {user ? (
-                      <>
-                        <Link href="/orders" onClick={() => setIsOpen(false)}>
-                          <div className="flex items-center space-x-3 px-3 py-3 bg-white rounded-lg hover:bg-[#dc143c]/10 transition-colors cursor-pointer border border-gray-200">
-                            <Package className="h-5 w-5 text-[#dc143c] flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900">Orders</p>
-                              <p className="text-xs text-gray-500">View your orders</p>
-                            </div>
-                          </div>
-                        </Link>
-
-                        <Link href="/cart" onClick={() => setIsOpen(false)}>
-                          <div className="flex items-center justify-between px-3 py-3 bg-white rounded-lg hover:bg-[#dc143c]/10 transition-colors cursor-pointer border border-gray-200">
-                            <div className="flex items-center space-x-3">
-                              <ShoppingCart className="h-5 w-5 text-[#dc143c] flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900">Cart</p>
-                                <p className="text-xs text-gray-500">View your cart</p>
-                              </div>
-                            </div>
-                            {itemCount > 0 && (
-                              <Badge className="bg-[#dc143c] text-white px-2 py-0.5 text-xs">{itemCount}</Badge>
-                            )}
-                          </div>
-                        </Link>
-
-                        <Button
-                          onClick={() => {
-                            handleLogout()
-                            setIsOpen(false)
-                          }}
-                          variant="outline"
-                          className="w-full border-[#dc143c] text-[#dc143c] hover:bg-[#dc143c] hover:text-white"
-                        >
-                          <LogOut className="h-4 w-4 mr-2" />
-                          Logout
-                        </Button>
-                      </>
-                    ) : (
-                      <Link href="/login" onClick={() => setIsOpen(false)} className="block">
-                        <Button className="w-full bg-[#dc143c] hover:bg-[#b01030] text-white">Login</Button>
-                      </Link>
-                    )}
                   </div>
                 </div>
               </SheetContent>
