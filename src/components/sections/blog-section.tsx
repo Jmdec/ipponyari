@@ -99,11 +99,15 @@ export default function BlogSection() {
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-4 mb-4">
               <div className="w-12 h-px bg-[#c41e3a]" />
-              <span className="text-sm font-medium text-[#c41e3a] tracking-[0.2em] uppercase">Our Journal</span>
+              <span className="text-sm font-medium text-[#c41e3a] tracking-[0.2em] uppercase">Kitchen Chronicles</span>
               <div className="w-12 h-px bg-[#c41e3a]" />
             </div>
-            <h2 className="text-4xl font-semibold text-stone-900">Latest Stories</h2>
-            <p className="text-lg text-stone-600 max-w-2xl mx-auto mt-4">
+            <h2 className="text-5xl font-bold mb-4">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-700 to-red-600">
+                Latest Stories
+              </span>
+            </h2>
+            <p className="text-lg text-gray-700">
               Discover stories, recipes, and insights from our kitchen
             </p>
           </div>

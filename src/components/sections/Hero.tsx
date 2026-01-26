@@ -71,7 +71,7 @@ export default function HeroSection() {
 
   return (
     <>
-      <section className="relative min-h-[70vh] lg:min-h-[75vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-black via-[#1a0008] to-[#2d0011]">
+      <section className="relative min-h-[80vh] lg:min-h-[75vh] py-10 flex items-center justify-center overflow-hidden bg-gradient-to-br from-black via-[#1a0008] to-[#2d0011]">
         {/* Ambient glow effects */}
         <div className="absolute inset-0">
           <div className="absolute top-1/4 right-1/4 w-[600px] h-[600px] bg-[#dc143c]/10 rounded-full blur-[150px]" />
@@ -83,17 +83,17 @@ export default function HeroSection() {
             <div className="flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-16">
               {/* Left side - Text content */}
               <div className="flex-1 text-center lg:text-left w-full">
-                <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-light text-white mb-6 lg:mb-8 leading-tight">
-                  "Where Tradition Meets <br className="hidden lg:block" />
-                  <span className="text-[#dc143c] font-normal">Authentic Taste</span>"
+                <h1 className="text-4xl md:text-5xl xl:text-6xl font-light text-white mb-6 lg:mb-8 leading-tight">
+                  Where Tradition Meets <br className="hidden lg:block"/>
+                  <span className="text-[#dc143c] font-semibold">Authentic Taste</span>
                 </h1>
 
-                <p className="text-base md:text-lg lg:text-xl text-white/80 italic mb-8 lg:mb-12 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                <p className="text-md md:text-lg lg:text-xl text-white/80 italic mb-8 lg:mb-12 leading-relaxed max-w-2xl mx-auto lg:mx-0">
                   Experience the essence of Japanese culinary heritage, crafted with passion and served with the warmth of traditional hospitality
                 </p>
 
                 {/* Buttons */}
-                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                <div className="flex flex-col md:flex-row gap-4 justify-center lg:justify-start">
                   <Button
                     asChild
                     size="lg"
@@ -113,9 +113,9 @@ export default function HeroSection() {
               </div>
 
               {/* Right side - Slider with Preview */}
-              <div className="flex-1 w-full max-w-xs lg:max-w-sm">
+              <div className="flex-1 w-full max-w-md lg:max-w-md">
                 {loading ? (
-                  <div className="w-full h-[480px] flex items-center justify-center bg-black/30 backdrop-blur-sm rounded-2xl border border-[#dc143c]/20">
+                  <div className="w-full h-[500px] flex items-center justify-center bg-black/30 backdrop-blur-sm rounded-2xl border border-[#dc143c]/20">
                     <div className="w-8 h-8 border-2 border-[#dc143c]/30 border-t-[#dc143c] rounded-full animate-spin"></div>
                   </div>
                 ) : dishes.length === 0 ? (
@@ -124,7 +124,7 @@ export default function HeroSection() {
                   </div>
                 ) : (
                   <div 
-                    className="relative flex gap-4"
+                    className="relative flex gap-4" 
                     onMouseEnter={() => setIsHovered(true)}
                     onMouseLeave={() => setIsHovered(false)}
                   >
@@ -166,7 +166,7 @@ export default function HeroSection() {
                               }`}
                             >
                               {/* Image */}
-                              <div className="relative h-64 overflow-hidden">
+                              <div className="relative h-70 overflow-hidden">
                                 <img
                                   src={dish.image_url || "/placeholder.svg"}
                                   alt={dish.name}
@@ -206,48 +206,8 @@ export default function HeroSection() {
                             </div>
                           ))}
                         </div>
-
-                        {/* Slide Indicators */}
-                        {dishes.length > 1 && (
-                          <div className="absolute bottom-[13.5rem] left-1/2 -translate-x-1/2 flex gap-2 z-20">
-                            {dishes.map((_, index) => (
-                              <button
-                                key={index}
-                                onClick={() => setCurrentSlide(index)}
-                                className={`h-1.5 rounded-full transition-all duration-300 ${
-                                  index === currentSlide
-                                    ? "bg-[#dc143c] w-6"
-                                    : "bg-white/40 hover:bg-white/60 w-1.5"
-                                }`}
-                                aria-label={`Go to slide ${index + 1}`}
-                              />
-                            ))}
-                          </div>
-                        )}
                       </div>
                     </div>
-
-                    {/* Preview Shadow - Next Item */}
-                    {dishes.length > 1 && (
-                      <div className="hidden lg:block absolute -right-8 xl:-right-12 top-1/2 -translate-y-1/2 w-24 xl:w-28 pointer-events-none">
-                        <div 
-                          className="relative h-[480px] rounded-2xl overflow-hidden opacity-40 blur-[2px] scale-95 transition-all duration-500"
-                        >
-                          {/* Preview Image */}
-                          <img
-                            src={dishes[getNextIndex()].image_url || "/placeholder.svg"}
-                            alt={dishes[getNextIndex()].name}
-                            className="w-full h-full object-cover"
-                          />
-                          
-                          {/* Dark overlay for shadow effect */}
-                          <div className="absolute inset-0 bg-black/40" />
-                          
-                          {/* Gradient edge */}
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/20 to-black/60" />
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
@@ -263,7 +223,7 @@ export default function HeroSection() {
           onClick={() => setSelectedDish(null)}
         >
           <div
-            className="relative bg-gradient-to-br from-[#1a1a1a] to-[#2d0011] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-in zoom-in duration-300 shadow-2xl border border-[#dc143c]/30"
+            className="relative bg-gradient-to-br from-[#1a1a1a] to-[#2d0011] rounded-2xl max-w-4xl w-full max-h-[90vh] animate-in zoom-in duration-300 shadow-2xl border border-[#dc143c]/30 flex flex-col md:flex-row overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -274,7 +234,8 @@ export default function HeroSection() {
               <X size={24} />
             </button>
 
-            <div className="relative h-72 md:h-96 overflow-hidden">
+            {/* Left side - Image */}
+            <div className="relative w-full md:w-2/5 h-64 md:h-auto flex-shrink-0 overflow-hidden">
               <img
                 src={selectedDish.image_url || "/placeholder.svg"}
                 alt={selectedDish.name}
@@ -283,20 +244,23 @@ export default function HeroSection() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             </div>
 
-            <div className="p-6 md:p-8">
-              <div className="mb-4">
-                <span className="inline-block px-3 py-1.5 bg-[#dc143c] text-white text-xs font-semibold rounded-full mb-4 uppercase tracking-wide">
-                  {selectedDish.category}
-                </span>
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">{selectedDish.name}</h2>
-                {selectedDish.price > 0 && (
-                  <p className="text-3xl md:text-4xl font-bold text-[#dc143c]">
-                    ₱{Number(selectedDish.price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                  </p>
-                )}
-              </div>
+            {/* Right side - Details */}
+            <div className="flex-1 p-6 md:p-8 flex flex-col justify-between overflow-y-auto">
+              <div>
+                <div className="mb-4">
+                  <span className="inline-block px-3 py-1.5 bg-[#dc143c] text-white text-xs font-semibold rounded-full mb-4 uppercase tracking-wide">
+                    {selectedDish.category}
+                  </span>
+                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">{selectedDish.name}</h2>
+                  {selectedDish.price > 0 && (
+                    <p className="text-3xl md:text-4xl font-bold text-[#dc143c]">
+                      ₱{Number(selectedDish.price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                    </p>
+                  )}
+                </div>
 
-              <p className="text-white/80 text-base leading-relaxed mb-6">{selectedDish.description}</p>
+                <p className="text-white/80 text-base leading-relaxed mb-6">{selectedDish.description}</p>
+              </div>
 
               <Button
                 asChild

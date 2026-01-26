@@ -28,12 +28,12 @@ export default function TestimonialsSection() {
         const response = await fetch("/api/testimonials?status=approved")
         if (!response.ok) throw new Error("Failed to fetch testimonials")
         const data = await response.json()
-        
+
         // Additional client-side filter to ensure only approved testimonials
         const approvedTestimonials = data.filter(
           (testimonial: Testimonial) => testimonial.status === "approved"
         )
-        
+
         setTestimonials(approvedTestimonials)
       } catch (err) {
         console.error("Error fetching testimonials:", err)
@@ -72,16 +72,23 @@ export default function TestimonialsSection() {
 
   return (
     <>
-      <section className="py-20 bg-gradient-to-br from-amber-50 via-orange-50 to-stone-100">
+      <section className="py-20 bg-gradient-to-br from-amber-50 via-orange-50 to-stone-100 border-b-2 border-red-100 shadow-sm">
         <div className="container mx-auto px-4">
           {/* Header */}
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="w-12 h-px bg-[#c41e3a]" />
+                <span className="text-xs lg:text-sm font-medium text-[#c41e3a] tracking-[0.2em] uppercase">Trusted Impressions</span>
+              <div className="w-12 h-px bg-[#c41e3a]" />
+            </div>
+              <h2 className="text-4xl lg:text-5xl font-bold leading-tight mb-5">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-700 to-red-600">
                 What Our Guests Say
               </span>
             </h2>
-            <p className="text-lg text-gray-700">Real experiences from our valued customers</p>
+              <p className="text-md lg:text-lg text-gray-600 leading-relaxed">
+              Real experiences from our valued customers
+            </p>
           </div>
 
           {/* Testimonials Carousel */}
@@ -101,63 +108,62 @@ export default function TestimonialsSection() {
 
                 {/* Single Card */}
                 <Card
-                onClick={() => setSelectedTestimonial(testimonials[currentIndex])}
-                className="flex-1 group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-red-200 overflow-hidden bg-white cursor-pointer"
-              >
-                <CardContent className="p-6 md:p-8 space-y-3 md:space-y-4">
-                  {/* Quote Icon */}
-                  <Quote className="w-10 h-10 text-red-400" />
-
-                  {/* Rating */}
-                  <div className="flex gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-5 h-5 ${
-                          i < testimonials[currentIndex].rating
-                            ? "text-red-600 fill-red-600"
-                            : "text-gray-300"
-                        }`}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Message Preview - Truncated */}
-                  <p className="text-gray-700 italic leading-relaxed line-clamp-3">
-                    "{testimonials[currentIndex].message}"
-                  </p>
-
-                  {/* Read More */}
-                  <p className="text-red-600 font-semibold group-hover:text-red-700">
-                    Read more →
-                  </p>
-
-                  {/* Client Info */}
-                  <div className="pt-4 border-t border-red-100">
-                    <p className="text-base md:text-lg font-semibold text-gray-900">
-                      {testimonials[currentIndex].client_name}
-                    </p>
-                    <p className="text-xs md:text-sm text-gray-500 mt-1">
-                      {new Date(testimonials[currentIndex].created_at).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Next Button */}
-              {testimonials.length > 1 && (
-                <button
-                  onClick={nextSlide}
-                  className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white rounded-full p-3 md:p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 relative z-50"
-                  aria-label="Next testimonial"
+                  onClick={() => setSelectedTestimonial(testimonials[currentIndex])}
+                  className="flex-1 group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-red-200 overflow-hidden bg-white cursor-pointer"
                 >
-                  <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
-                </button>
-              )}
+                  <CardContent className="p-6 md:p-8 space-y-3 md:space-y-4">
+                    {/* Quote Icon */}
+                    <Quote className="w-10 h-10 text-red-400" />
+
+                    {/* Rating */}
+                    <div className="flex gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-5 h-5 ${i < testimonials[currentIndex].rating
+                              ? "text-red-600 fill-red-600"
+                              : "text-gray-300"
+                            }`}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Message Preview - Truncated */}
+                    <p className="text-gray-700 italic leading-relaxed line-clamp-3">
+                      "{testimonials[currentIndex].message}"
+                    </p>
+
+                    {/* Read More */}
+                    <p className="text-red-600 font-semibold group-hover:text-red-700">
+                      Read more →
+                    </p>
+
+                    {/* Client Info */}
+                    <div className="pt-4 border-t border-red-100">
+                      <p className="text-base md:text-lg font-semibold text-gray-900">
+                        {testimonials[currentIndex].client_name}
+                      </p>
+                      <p className="text-xs md:text-sm text-gray-500 mt-1">
+                        {new Date(testimonials[currentIndex].created_at).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Next Button */}
+                {testimonials.length > 1 && (
+                  <button
+                    onClick={nextSlide}
+                    className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white rounded-full p-3 md:p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 relative z-50"
+                    aria-label="Next testimonial"
+                  >
+                    <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
+                  </button>
+                )}
               </div>
 
               {/* Dots Indicator */}
@@ -167,11 +173,10 @@ export default function TestimonialsSection() {
                     <button
                       key={i}
                       onClick={() => setCurrentIndex(i)}
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        i === currentIndex
+                      className={`h-2 rounded-full transition-all duration-300 ${i === currentIndex
                           ? "bg-red-600 w-8"
                           : "bg-red-300 hover:bg-red-500 w-2"
-                      }`}
+                        }`}
                       aria-label={`Go to testimonial ${i + 1}`}
                     />
                   ))}
@@ -232,11 +237,10 @@ export default function TestimonialsSection() {
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className={`w-6 h-6 ${
-                      i < selectedTestimonial.rating
+                    className={`w-6 h-6 ${i < selectedTestimonial.rating
                         ? "text-amber-300 fill-amber-300"
                         : "text-white text-opacity-30"
-                    }`}
+                      }`}
                   />
                 ))}
               </div>
@@ -246,7 +250,7 @@ export default function TestimonialsSection() {
             <div className="p-6 space-y-4">
               <Quote className="w-12 h-12 text-red-400" />
               <p className="text-gray-700 text-lg leading-relaxed italic">
-                "{selectedTestimonial.message}"
+                &apos;{selectedTestimonial.message}&apos;
               </p>
             </div>
           </div>

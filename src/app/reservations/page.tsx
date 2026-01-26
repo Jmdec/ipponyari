@@ -234,7 +234,7 @@ export default function ReservationsPage() {
             <CheckCircle className="w-14 h-14 text-[#dc143c]" />
           </div>
           <h2 className="text-4xl font-black text-white mb-3 drop-shadow-lg">Reservation Confirmed!</h2>
-          <p className="text-xl text-white/90 mb-2">We're excited to see you at Ipponyari</p>
+          <p className="text-xl text-white/90 mb-2">We&apos;re excited to see you at Ipponyari</p>
           <p className="text-white/70 mb-6">Check your email for confirmation details</p>
 
           <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4 mb-6">
@@ -349,7 +349,7 @@ export default function ReservationsPage() {
             {step === 1 && (
               <div>
                 <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-white mb-2">Let's start with your name</h2>
+                  <h2 className="text-2xl font-bold text-white mb-2">Let&apos;s start with your name</h2>
                   <p className="text-white/70">Help us personalize your reservation</p>
                 </div>
 
@@ -405,7 +405,7 @@ export default function ReservationsPage() {
               <div>
                 <div className="mb-8">
                   <h2 className="text-2xl font-bold text-white mb-2">How can we reach you?</h2>
-                  <p className="text-white/70">We'll send confirmation to this email</p>
+                  <p className="text-white/70">We&apos;ll send confirmation to this email</p>
                 </div>
 
                 <div className="space-y-6">
@@ -493,7 +493,7 @@ export default function ReservationsPage() {
                           <div className="p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl flex items-start gap-2">
                             <AlertCircle className="w-4 h-4 text-[#ff6b6b] flex-shrink-0 mt-0.5" />
                             <p className="text-[#ff6b6b] text-sm font-medium">
-                              You've reached the maximum of 2 reservations for this date. Please choose another date.
+                              You&apos;ve reached the maximum of 2 reservations for this date. Please choose another date.
                             </p>
                           </div>
                         ) : (
