@@ -1,15 +1,22 @@
 "use client"
+
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Plus, Flame, Leaf, X, ShoppingCart, Loader2 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog"
+import { Plus, Flame, Leaf, ShoppingCart, X } from "lucide-react"
 import { useCartStore } from "@/store/cartStore"
 import { useAuthStore } from "@/store/authStore"
 import { toast } from "@/hooks/use-toast"
 import type { MenuItem } from "@/types"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
 
 interface MenuItemCardProps {
   item: MenuItem
@@ -20,69 +27,28 @@ const getImageUrl = (imagePath: unknown): string => {
     return "/placeholder.svg"
   }
 
-  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
-    return imagePath
-  }
+  if (imagePath.startsWith("http")) return imagePath
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-  let fullPath = imagePath
-  if (!imagePath.startsWith("images/products/")) {
-    fullPath = `images/products/${imagePath}`
-  }
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
-  return `${API_BASE_URL}/${fullPath}`
+  return imagePath.startsWith("images/products/")
+    ? `${API_BASE_URL}/${imagePath}`
+    : `${API_BASE_URL}/images/products/${imagePath}`
 }
 
 export default function MenuItemCard({ item }: MenuItemCardProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [products, setProducts] = useState<MenuItem[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
   const addItem = useCartStore((state) => state.addItem)
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn)
   const router = useRouter()
 
-  useEffect(() => {
-      const fetchProducts = async () => {
-        try {
-          setLoading(true)
-          const res = await fetch("/api/product?paginate=false")
-          if (!res.ok) throw new Error("Failed to fetch products")
-          const data = await res.json()
-  
-          const transformed: MenuItem[] = data.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            description: p.description,
-            price: Number(p.price),
-            category: p.category,
-            image: p.image,
-            isSpicy: p.is_spicy || false,
-            isVegetarian: p.is_vegetarian || false,
-          }))
-  
-          setProducts(transformed)
-        } catch (err: any) {
-          setError(err.message)
-        } finally {
-          setLoading(false)
-        }
-      }
-  
-      fetchProducts()
-    }, [])
+  const formatPrice = (price: number | string) =>
+    Number(price).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
 
-  const formatPrice = (price: number | string): string => {
-    const numPrice = typeof price === "number" ? price : Number.parseFloat(String(price))
-    return numPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  }
-
-  const handleAddToCart = (e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault()
-      e.stopPropagation()
-    }
-
+  const handleAddToCart = () => {
     if (!isLoggedIn) {
       toast({
         title: "Please log in",
@@ -100,121 +66,74 @@ export default function MenuItemCard({ item }: MenuItemCardProps) {
     })
   }
 
-  const isSpicy = item.isSpicy || item.is_spicy || false
-  const isVegetarian = item.isVegetarian || item.is_vegetarian || false
+  const isSpicy = item.isSpicy || item.is_spicy
+  const isVegetarian = item.isVegetarian || item.is_vegetarian
 
-  if (loading) {
-    return (
-      <div className="group bg-gradient-to-br from-black via-red-950/20 to-black border border-red-800/50 
-            rounded-xl overflow-hidden hover:border-red-600/80 transition-all duration-300 
-            shadow-lg hover:shadow-2xl hover:shadow-red-900/40 hover:-translate-y-1 justify-center items-center
-            relative flex flex-col h-full min-h-[30vh] md:min-h-[40vh] lg:min-h-[50vh] cursor-pointer">
-        <Loader2 className="h-10 w-10 animate-spin text-white" />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#fff5f5] via-[#ffe8e8] to-[#ffdbdb] flex items-center justify-center">
-        <div className="text-center bg-white/90 backdrop-blur-xl px-8 py-6 rounded-2xl border-2 border-[#dc143c]/20 shadow-2xl max-w-md">
-          <div className="w-16 h-16 bg-[#dc143c]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <X className="h-8 w-8 text-[#dc143c]" />
-          </div>
-          <p className="text-gray-800 font-bold text-xl mb-2">Oops! Something went wrong</p>
-          <p className="text-gray-600 text-sm">{error}</p>
-          <Button
-            onClick={() => window.location.reload()}
-            className="mt-4 bg-[#dc143c] hover:bg-[#b01030] text-white"
-          >
-            Try Again
-          </Button>
-        </div>
-      </div>
-    )
-  }
-  
   return (
     <Dialog>
-      <DialogTrigger>
-        <div className="group bg-gradient-to-br from-black via-red-950/20 to-black border border-red-800/50 
-            rounded-xl overflow-hidden hover:border-red-600/80 transition-all duration-300 
-            shadow-lg hover:shadow-2xl hover:shadow-red-900/40 hover:-translate-y-1
-            relative flex flex-col h-full min-h-[30vh] md:min-h-[40vh] lg:min-h-[50vh] cursor-pointer">
+      <div className="relative">
+        <Badge
+          onPointerDown={(e) => e.stopPropagation()}
+          className="absolute top-2 left-2 z-20
+          bg-red-900 text-red-200 border border-red-700
+          text-xs sm:text-sm pointer-events-auto"
+        >
+          {item.category}
+        </Badge>
+      </div> 
 
-          <div className="absolute top-2 left-2 z-10 flex gap-1">
-            <Badge
-              variant="secondary"
-              className="bg-red-600 text-white text-[9px] sm:text-[10px] px-1.5 py-0.5 border border-red-700 font-semibold"
-            >
-              {item.category}
-            </Badge>
+      <DialogTrigger asChild>
+        <div
+          className="group cursor-pointer bg-gradient-to-br from-black via-red-950/20 to-black
+          border border-red-800/50 rounded-xl overflow-hidden
+          transition-all duration-300 hover:border-red-600/80 hover:-translate-y-1
+          shadow-lg hover:shadow-red-900/40 flex flex-col min-h-[420px]"
+        >
 
-
-            <div className="absolute top-2 right-2 z-10 flex-col gap-1 hidden sm:flex">
-              {isSpicy && (
-                <Badge
-                  variant="destructive"
-                  className="bg-red-500 text-white text-[9px] px-1 py-0 border border-red-600"
-                >
-                  <Flame className="w-2.5 h-2.5 mr-0.5" />
-                  Hot
-                </Badge>
-              )}
-              {isVegetarian && (
-                <Badge
-                  variant="secondary"
-                  className="bg-green-600 text-white text-[9px] px-1 py-0 border border-green-700"
-                >
-                  <Leaf className="w-2.5 h-2.5 mr-0.5" />
-                  Veg
-                </Badge>
-              )}
-            </div>
+          {/* Image */}
+          <div className="relative w-full aspect-[4/3] overflow-hidden bg-black">
+            <Image
+              src={getImageUrl(item.image)}
+              alt={item.name}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-110"
+              placeholder="blur"
+              blurDataURL="/placeholder.svg"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
           </div>
 
-          <div className="flex flex-col h-full">
-            {/* Image Section */}
-            <div className="w-full h-[55%] flex-shrink-0 overflow-hidden bg-black relative">
-              <Image
-                src={getImageUrl(item.image) || "/placeholder.svg"}
-                alt={item.name}
-                width={300}
-                height={300}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+          {/* Content */}
+          <div className="flex flex-col justify-between p-4 flex-1">
+            <div>
+              <h3 className="text-lg font-semibold text-white line-clamp-2">
+                {item.name}
+              </h3>
+
+              <p className="text-md text-gray-300 mb-0 line-clamp-2 leading-snug">
+                {item.description && item.description.length > 50
+                  ? `${item.description.substring(0, 50)}...`
+                  : item.description}
+              </p>
             </div>
 
-            {/* Content Section */}
-            <div className="h-[45%] p-3 sm:p-4 flex flex-col justify-between overflow-hidden">
-              <div className="min-h-0">
+            <div className="flex items-center justify-between mt-4">
+              <span className="text-xl font-bold text-red-300">
+                ₱{formatPrice(item.price)}
+              </span>
 
-                {/* Title */}
-                <h3 className="h-[60px] md:h-[30px] text-xl font-bold text-white mb-0.5 line-clamp-2">
-                  {item.name}
-                </h3>
-
-                {/* Description */}
-                <p className="hidden md:block text-sm text-gray-300 line-clamp-1">
-                  {item.description}
-                </p>
-              </div>
-
-              {/* Footer */}
-              <div className="flex items-center justify-between gap-1.5 py-2 mt-2">
-                <span className="text-2xl font-bold text-red-200 flex-shrink-0 whitespace-nowrap">
-                  ₱{formatPrice(item.price)}
-                </span>
-
-                <Button
-                  onClick={handleAddToCart}
-                  size="icon"
-                  className="bg-red-600 hover:bg-red-700 text-white border border-red-700 transition-all duration-300 hover:scale-105 text-[10px] sm:text-xs px-2 py-1 h-auto flex-shrink-0"
-                >
-                  <ShoppingCart className="w-4 h-4 m-1" />
-                </Button>
-              </div>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation()   // ⬅ prevents DialogTrigger
+                  handleAddToCart()
+                }}
+                size="icon"
+                className="bg-red-600 hover:bg-red-700 border border-red-700"
+              >
+                <ShoppingCart className="w-4 h-4" />
+              </Button>
             </div>
           </div>
         </div>
@@ -226,6 +145,12 @@ export default function MenuItemCard({ item }: MenuItemCardProps) {
           <DialogTitle className="text-xl sm:text-2xl md:text-3xl font-bold text-white">
             {item.name}
           </DialogTitle>
+
+          <DialogClose asChild>
+            <button className="absolute top-0 right-0">
+              <X className="w-5 h-5 text-gray-400 hover:text-white" />
+            </button>
+          </DialogClose>
         </DialogHeader>
 
         <div className="flex flex-col lg:flex-row gap-4 md:gap-6 lg:gap-8">
