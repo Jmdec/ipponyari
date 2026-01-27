@@ -80,6 +80,28 @@ export default function TestimonialsSection() {
     return (
       <section className="py-20 bg-gradient-to-br from-amber-50 via-orange-50 to-stone-100">
         <div className="container mx-auto px-4 text-center">
+          <div className="text-center mb-16">
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="w-12 h-px bg-[#c41e3a]" />
+              <span className="text-xs lg:text-sm font-medium text-[#c41e3a] tracking-[0.2em] uppercase">
+                Trusted Impressions
+              </span>
+              <div className="w-12 h-px bg-[#c41e3a]" />
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-bold leading-tight mb-5">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-700 to-red-600">
+                What Our Guests Say
+              </span>
+            </h2>
+            <p className="text-md lg:text-lg text-gray-600 leading-relaxed">
+              Real experiences from our valued customers
+            </p>
+          </div>
+          <div className="flex justify-center gap-2 mt-6">
+            <div className="w-2 h-2 bg-[#ff6b6b] rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-[#ff6b6b] rounded-full animate-bounce delay-100"></div>
+            <div className="w-2 h-2 bg-[#ff6b6b] rounded-full animate-bounce delay-200"></div>
+          </div>
           <p className="text-lg text-gray-600">Loading testimonials...</p>
         </div>
       </section>

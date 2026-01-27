@@ -123,13 +123,13 @@ const Header = () => {
   }
 
   const allNav = [
-    { name: "Home", href: "/", icon: Home },
-    { name: "Menu", href: "/menu", icon: ChefHat },
-    { name: "Reservations", href: "/reservations", icon: Calendar },
-    { name: "Blog", href: "/blog", icon: BookOpen },
-    { name: "Promos", href: "/promos", icon: Gift },
-    { name: "Testimonials", href: "/testimonials", icon: MessageSquare },
-    { name: "Contact Us", href: "/contact", icon: Phone },
+    { name: "Home", href: "/" },
+    { name: "Menu", href: "/menu" },
+    { name: "Reservations", href: "/reservations"},
+    { name: "Blog", href: "/blog"},
+    { name: "Promos", href: "/promos" },
+    { name: "Testimonials", href: "/testimonials" },
+    { name: "Contact Us", href: "/contact" },
   ]
 
   const isActivePage = (href: string) => {
@@ -155,7 +155,7 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-1">
+          <nav className="hidden lg:flex items-center space-x-2">
             {allNav.map((item) => (
               <Link
                 key={item.name}
@@ -165,7 +165,6 @@ const Header = () => {
                   : "text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c]"
                   }`}
               >
-                <item.icon className="h-4 w-4" />
                 <span>{item.name}</span>
               </Link>
             ))}

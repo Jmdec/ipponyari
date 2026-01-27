@@ -77,13 +77,12 @@ export default function BlogSection() {
             <p className="text-lg text-gray-700">
               Discover stories, recipes, and insights from our kitchen
             </p>
+            <div className="flex justify-center gap-2 mt-6">
+              <div className="w-2 h-2 bg-[#ff6b6b] rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-[#ff6b6b] rounded-full animate-bounce delay-100"></div>
+              <div className="w-2 h-2 bg-[#ff6b6b] rounded-full animate-bounce delay-200"></div>
+            </div>
             <p className="text-lg text-stone-600 mt-4">Loading stories...</p>
-          </div>
-          
-          <div className="flex justify-center gap-2 mt-6">
-            <div className="w-2 h-2 bg-[#ff6b6b] rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-[#ff6b6b] rounded-full animate-bounce delay-100"></div>
-            <div className="w-2 h-2 bg-[#ff6b6b] rounded-full animate-bounce delay-200"></div>
           </div>
         </div>
       </section>

@@ -17,6 +17,7 @@ import {
   ChefHat,
   MessageSquare,
   Filter,
+  Plus,
 } from "lucide-react"
 import Link from "next/link"
 import { toast } from "@/hooks/use-toast"
@@ -66,8 +67,8 @@ const ReservationsHistory = () => {
           console.log("Authenticated:", reservationsData.debug?.authenticated)
           console.log("Count:", reservationsData.debug?.total_count || reservationsData.data?.length)
 
-          const resData = Array.isArray(reservationsData) 
-            ? reservationsData 
+          const resData = Array.isArray(reservationsData)
+            ? reservationsData
             : reservationsData.data || []
 
           console.log("✅ Reservations loaded:", resData.length)
@@ -201,13 +202,16 @@ const ReservationsHistory = () => {
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <div className="text-center gap-4 mb-6">
             <div>
-              <h1 className="text-4xl md:text-5xl font-black text-white mb-2">
-                Your <span className="text-[#ff6b6b]">Reservations</span>
-              </h1>
-              <p className="text-white/70 text-lg">Track your table reservations</p>
+              <h1 className="text-4xl md:text-5xl font-black text-white mb-2">Reservations</h1>
+              <p className="text-white/70 text-lg">Track your dining experience in one place</p>
             </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+          <div className="space-y-2">
             <div className="flex items-center gap-3 bg-[#4B0000]/70 backdrop-blur-sm px-6 py-3 rounded-2xl shadow-lg border border-white/30">
               <User className="w-5 h-5 text-[#ff6b6b]" />
               <div>
@@ -215,184 +219,219 @@ const ReservationsHistory = () => {
                 <p className="font-bold text-white">{user.name}</p>
               </div>
             </div>
-          </div>
 
-          {/* Filters */}
-          <div className="bg-[#4B0000]/70 backdrop-blur-sm rounded-2xl shadow-lg p-4 border border-white/30">
-            <div className="flex items-center gap-2 mb-3">
-              <Filter className="w-4 h-4 text-[#ff6b6b]" />
-              <span className="text-sm font-semibold text-white">Filter by Status</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setActiveFilter("all")}
-                className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-                  activeFilter === "all"
-                    ? "bg-white text-[#8B0000] shadow-md"
-                    : "bg-white/10 text-white hover:bg-white/20"
-                }`}
-              >
-                All ({getStatusCount("all")})
-              </button>
-              <button
-                onClick={() => setActiveFilter("confirmed")}
-                className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-                  activeFilter === "confirmed"
-                    ? "bg-blue-500 text-white shadow-md"
-                    : "bg-white/10 text-white hover:bg-white/20"
-                }`}
-              >
-                Confirmed ({getStatusCount("confirmed")})
-              </button>
-              <button
-                onClick={() => setActiveFilter("completed")}
-                className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-                  activeFilter === "completed"
-                    ? "bg-emerald-500 text-white shadow-md"
-                    : "bg-white/10 text-white hover:bg-white/20"
-                }`}
-              >
-                Completed ({getStatusCount("completed")})
-              </button>
-              <button
-                onClick={() => setActiveFilter("cancelled")}
-                className={`px-4 py-2 rounded-xl font-semibold text-sm transition-all ${
-                  activeFilter === "cancelled"
-                    ? "bg-red-500 text-white shadow-md"
-                    : "bg-white/10 text-white hover:bg-white/20"
-                }`}
-              >
-                Cancelled ({getStatusCount("cancelled")})
-              </button>
-            </div>
-          </div>
-        </div>
+            {/* Filters */}
+            <div className="bg-[#4B0000]/60 backdrop-blur-sm rounded-xl border border-white/20 p-3 h-fit lg:sticky lg:top-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Filter className="w-4 h-4 text-[#ff6b6b]" />
+                <span className="text-xs font-semibold text-white uppercase tracking-wide">
+                  Status
+                </span>
+              </div>
 
-        {/* Content */}
-        {filteredReservations.length === 0 ? (
-          <div className="flex items-center justify-center py-16">
-            <Card className="max-w-lg w-full bg-[#4B0000]/70 backdrop-blur-sm border-white/30 shadow-2xl">
-              <CardContent className="p-12 text-center">
-                <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Calendar className="w-12 h-12 text-[#ff6b6b]" />
-                </div>
-                <h2 className="text-3xl font-black text-white mb-3">No Reservations Yet</h2>
-                <p className="text-white/70 mb-8 text-lg">
-                  Make your first reservation and enjoy our authentic Japanese cuisine!
-                </p>
-                <Button
-                  asChild
-                  className="bg-white hover:bg-white/90 text-[#8B0000] font-bold py-6 px-8 text-lg shadow-lg"
+              <div className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
+                <button
+                  onClick={() => setActiveFilter("all")}
+                  className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition ${activeFilter === "all"
+                    ? "bg-white text-[#8B0000] shadow"
+                    : "bg-white/10 text-white hover:bg-white/20"
+                    }`}
                 >
-                  <Link href="/reservations">Make Reservation</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredReservations.map((reservation) => (
-              <Card
-                key={reservation.id}
-                className="bg-[#4B0000]/70 backdrop-blur-sm border-white/30 shadow-xl hover:shadow-2xl py-0 transition-all overflow-hidden"
+                  All ({getStatusCount("all")})
+                </button>
+
+                <button
+                  onClick={() => setActiveFilter("confirmed")}
+                  className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition ${activeFilter === "confirmed"
+                    ? "bg-blue-500 text-white shadow"
+                    : "bg-white/10 text-white hover:bg-white/20"
+                    }`}
+                >
+                  Confirmed ({getStatusCount("confirmed")})
+                </button>
+
+                <button
+                  onClick={() => setActiveFilter("completed")}
+                  className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition ${activeFilter === "completed"
+                    ? "bg-emerald-500 text-white shadow"
+                    : "bg-white/10 text-white hover:bg-white/20"
+                    }`}
+                >
+                  Completed ({getStatusCount("completed")})
+                </button>
+
+                <button
+                  onClick={() => setActiveFilter("cancelled")}
+                  className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition ${activeFilter === "cancelled"
+                    ? "bg-red-500 text-white shadow"
+                    : "bg-white/10 text-white hover:bg-white/20"
+                    }`}
+                >
+                  Cancelled ({getStatusCount("cancelled")})
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-5 text-center">
+              <Button
+                asChild
+                className="bg-white hover:bg-white/90 text-[#8B0000] font-bold text-md shadow-lg rounded-2xl"
               >
-                <div className="bg-gradient-to-r from-[#8B0000] to-[#6B0000] p-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="text-white font-black text-lg">Reservation #{reservation.id}</h3>
-                      <p className="text-white/70 text-sm">
-                        {new Date(reservation.created_at).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </p>
-                    </div>
-                    <Badge
-                      className={`${getStatusColor(reservation.status)} flex items-center gap-2 px-3 py-1 border`}
-                    >
-                      {getStatusIcon(reservation.status)}
-                      <span className="capitalize font-semibold">{reservation.status}</span>
-                    </Badge>
+                <Link href="/reservations">
+                  <Plus className="w-4 h-4 mr-2" />Make New Reservation
+                </Link>
+              </Button>
+            </div>
+          </div>
+
+
+          {/* Content */}
+          {filteredReservations.length === 0 ? (
+            <div className="flex items-center justify-center py-16">
+              <Card className="max-w-lg w-full bg-[#4B0000]/70 backdrop-blur-sm border-white/30 shadow-2xl">
+                <CardContent className="p-12 text-center">
+                  <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Calendar className="w-12 h-12 text-[#ff6b6b]" />
                   </div>
-                </div>
-
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div className="bg-white/10 rounded-xl p-4 border border-white/20">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Calendar className="w-4 h-4 text-[#ff6b6b]" />
-                            <span className="text-xs text-white/70 font-semibold">Date</span>
-                          </div>
-                          <p className="font-bold text-white">
-                            {new Date(reservation.date).toLocaleDateString("en-US", {
-                              month: "long",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                          </p>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Clock className="w-4 h-4 text-[#ff6b6b]" />
-                            <span className="text-xs text-white/70 font-semibold">Time</span>
-                          </div>
-                          <p className="font-bold text-white">{reservation.time}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-white/5 rounded-xl p-4 space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Users className="w-5 h-5 text-white/70" />
-                        <span className="text-white/70">Guests:</span>
-                        <span className="font-bold text-white">{reservation.guests} people</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <User className="w-5 h-5 text-white/70" />
-                        <span className="text-white/70">Name:</span>
-                        <span className="font-bold text-white">{reservation.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Mail className="w-5 h-5 text-white/70" />
-                        <span className="text-white/70">Email:</span>
-                        <span className="font-semibold text-white">{reservation.email}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-5 h-5 text-white/70" />
-                        <span className="text-white/70">Phone:</span>
-                        <span className="font-semibold text-white">{reservation.phone}</span>
-                      </div>
-                    </div>
-
-                    {reservation.special_requests && (
-                      <div className="bg-white/10 rounded-xl p-4 border border-white/20">
-                        <div className="flex items-start gap-2">
-                          <MessageSquare className="w-5 h-5 text-[#ff6b6b] mt-1 flex-shrink-0" />
-                          <div>
-                            <p className="text-xs text-white/70 font-semibold mb-1">Special Requests</p>
-                            <p className="text-white">{reservation.special_requests}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <h2 className="text-3xl font-black text-white mb-3">No Reservations Yet</h2>
+                  <p className="text-white/70 mb-8 text-lg">
+                    Make your first reservation and enjoy our authentic Japanese cuisine!
+                  </p>
+                  <Button
+                    asChild
+                    className="bg-white hover:bg-white/90 text-[#8B0000] font-bold py-6 px-8 text-lg shadow-lg"
+                  >
+                    <Link href="/reservations">Make Reservation</Link>
+                  </Button>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        )}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-6">
+              {filteredReservations.map((reservation) => (
+                <Card
+                  key={reservation.id}
+                  className="bg-[#4B0000]/70 backdrop-blur-sm border-white/30 shadow-xl hover:shadow-2xl py-0 transition-all overflow-hidden"
+                >
+                  <div className="bg-gradient-to-r from-[#8B0000] to-[#6B0000] p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="flex">
+                          <h2 className="text-white font-black text-2xl">{reservation.occasion_type}&nbsp;</h2>
+                          <h3 className="text-white font-semnibold text-lg">- Reservation #{reservation.id}</h3>
+                        </div>
+                        <p className="text-white/70 text-sm">
+                          {new Date(reservation.created_at).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </p>
+                      </div>
+                      <Badge
+                        className={`${getStatusColor(reservation.status)} flex items-center gap-2 px-3 py-1 border`}
+                      >
+                        {getStatusIcon(reservation.status)}
+                        <span className="capitalize font-semibold">{reservation.status}</span>
+                      </Badge>
+                    </div>
+                  </div>
 
-        {/* Bottom CTA */}
-        <div className="mt-12 text-center">
-          <Button
-            asChild
-            className="bg-white hover:bg-white/90 text-[#8B0000] font-bold py-6 px-10 text-lg shadow-lg rounded-2xl"
-          >
-            <Link href="/reservations">Make New Reservation</Link>
-          </Button>
+                  <CardContent className="p-6">
+                    <div>
+                      <div className="bg-white/10 rounded-xl p-4 border border-white/20">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <Calendar className="w-4 h-4 text-[#ff6b6b]" />
+                              <span className="text-xs text-white/70 font-semibold">Date</span>
+                            </div>
+                            <p className="font-bold text-white">
+                              {new Date(reservation.date).toLocaleDateString("en-US", {
+                                month: "long",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </p>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <Clock className="w-4 h-4 text-[#ff6b6b]" />
+                              <span className="text-xs text-white/70 font-semibold">Time</span>
+                            </div>
+                            <p className="font-bold text-white">{reservation.time}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-white/5 rounded-xl p-4 space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Users className="w-5 h-5 text-white/70" />
+                              <span className="text-white/70">Guests:</span>
+                              <span className="font-bold text-white">{reservation.guests} people</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <User className="w-5 h-5 text-white/70" />
+                              <span className="text-white/70">Name:</span>
+                              <span className="font-bold text-white">{reservation.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Mail className="w-5 h-5 text-white/70" />
+                              <span className="text-white/70">Email:</span>
+                              <span className="font-semibold text-white">{reservation.email}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Phone className="w-5 h-5 text-white/70" />
+                              <span className="text-white/70">Phone:</span>
+                              <span className="font-semibold text-white">{reservation.phone}</span>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <ChefHat className="w-5 h-5 text-white/70" />
+                              <span className="text-white/70">Dining Preference:</span>
+                              <span className="font-semibold text-white">{reservation.dining_preference || '-'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-5 h-5 text-white/70" />
+                              <span className="text-white/70">Occasion:</span>
+                              <span className="font-semibold text-white">{reservation.occasion_type || '-'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <MessageSquare className="w-5 h-5 text-white/70" />
+                              <span className="text-white/70">Instructions:</span>
+                              <span className="font-semibold text-white">{reservation.occasion_instructions || '-'}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-white/10 text-white border-white/20">Fee: ₱{reservation.reservation_fee || '0.00'}</Badge>
+                          <Badge className="bg-white/10 text-white border-white/20">Method: {reservation.payment_method || '-'}</Badge>
+                          {reservation.payment_reference && <Badge className="bg-white/10 text-white border-white/20">Ref: {reservation.payment_reference}</Badge>}
+                          {reservation.payment_screenshot && (
+                            <a href={`/${reservation.payment_screenshot}`} target="_blank" rel="noopener noreferrer" className="underline text-xs ml-2 text-blue-300">View Receipt</a>
+                          )}
+                        </div>
+                      </div>
+
+                      {reservation.special_requests && (
+                        <div className="bg-white/10 rounded-xl p-4 border border-white/20">
+                          <div className="flex items-start gap-2">
+                            <MessageSquare className="w-5 h-5 text-[#ff6b6b] mt-1 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs text-white/70 font-semibold mb-1">Special Requests</p>
+                              <p className="text-white">{reservation.special_requests}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

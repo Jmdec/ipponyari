@@ -17,14 +17,36 @@ import {
 export default function ReservationsPage() {
   const [step, setStep] = useState(1)
   const [user, setUser] = useState<any>(null)
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
+  const [formData, setFormData] = useState<{
+    date: string;
+    time: string;
+    guests: string;
+    dining_preference: string;
+    name: string;
+    email: string;
+    phone: string;
+    special_requests: string;
+    occasion_type: string;
+    occasion_instructions: string;
+    reservation_fee: string;
+    payment_method: string;
+    payment_reference: string;
+    payment_receipt: File | undefined;
+  }>({
     date: "",
     time: "",
     guests: "2",
+    dining_preference: "Main Dining",
+    name: "",
+    email: "",
+    phone: "",
     special_requests: "",
+    occasion_type: "",
+    occasion_instructions: "",
+    reservation_fee: "",
+    payment_method: "",
+    payment_reference: "",
+    payment_receipt: undefined,
   })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
@@ -163,10 +185,18 @@ export default function ReservationsPage() {
   const isStepValid = () => {
     switch (step) {
       case 1:
-        return formData.name.trim() !== ""
+        // Reservation Details
+        return (
+          formData.date.trim() !== "" &&
+          formData.time.trim() !== "" &&
+          formData.guests.trim() !== "" &&
+          formData.dining_preference.trim() !== ""
+        )
       case 2:
+        // Guest Information
         const phoneDigits = formData.phone.replace(/\D/g, "")
         return (
+          formData.name.trim() !== "" &&
           formData.email.trim() !== "" &&
           isValidEmail(formData.email) &&
           formData.phone.trim() !== "" &&
@@ -175,12 +205,18 @@ export default function ReservationsPage() {
           !emailError
         )
       case 3:
-        if (formData.date === "" || formData.time === "") return false
-        if (isPastDateTime()) return false
-        if (isDailyLimitReached()) return false
-        return true
+        // Occasion Details
+        return formData.occasion_type && formData.occasion_type !== ""
       case 4:
-        return !isDailyLimitReached()
+        // Payment Details
+        if (isDailyLimitReached()) return false
+        // Reservation fee must be a positive number (if required)
+        if (formData.reservation_fee && (isNaN(Number(formData.reservation_fee)) || Number(formData.reservation_fee) < 0)) return false
+        // Payment method required
+        if (!formData.payment_method) return false
+        // If payment_reference is required for the method, check it (optional: add logic if needed)
+        // If payment_receipt is required for the method, check it (optional: add logic if needed)
+        return true
       default:
         return false
     }
@@ -256,7 +292,14 @@ export default function ReservationsPage() {
           date: "",
           time: "",
           guests: "2",
+          dining_preference: "Main Dining",
           special_requests: "",
+          occasion_type: "",
+          occasion_instructions: "",
+          reservation_fee: "",
+          payment_method: "",
+          payment_reference: "",
+          payment_receipt: undefined,
         })
         setMessage("")
         setDailyBookingsCount(0)
@@ -272,7 +315,7 @@ export default function ReservationsPage() {
 
   if (message === "success") {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#8B0000] via-[#6B0000] to-[#2B0000] flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="min-h-screen bg-linear-to-b from-[#8B0000] via-[#6B0000] to-[#2B0000] flex items-center justify-center p-4 relative overflow-hidden">
         {/* Background decoration */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
           <div className="absolute top-20 left-10 w-64 h-64 bg-[#dc143c]/30 rounded-full blur-3xl animate-pulse"></div>
@@ -299,15 +342,6 @@ export default function ReservationsPage() {
 
           <div className="flex gap-3">
             <button
-              onClick={() => {
-                setMessage("")
-                setStep(1)
-              }}
-              className="flex-1 px-6 py-3 bg-white text-[#8B0000] hover:bg-white/90 font-semibold rounded-xl transition-all shadow-lg hover:scale-105"
-            >
-              Make Another Reservation
-            </button>
-            <button
               onClick={() => (window.location.href = "/menu")}
               className="flex-1 px-6 py-3 border-2 border-white text-white font-semibold rounded-xl hover:bg-white/10 transition-all hover:scale-105"
             >
@@ -320,7 +354,7 @@ export default function ReservationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#8B0000] via-[#6B0000] to-[#2B0000] py-12 px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-linear-to-b from-[#8B0000] via-[#6B0000] to-[#2B0000] py-12 px-4 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
         <div className="absolute top-0 left-0 w-96 h-96 bg-[#dc143c]/30 rounded-full blur-3xl animate-pulse"></div>
@@ -350,18 +384,18 @@ export default function ReservationsPage() {
           <div className="relative">
             <div className="absolute top-5 left-0 right-0 flex items-center px-5">
               <div className="flex-1 flex items-center justify-between">
-                {[1, 2, 3].map((i) => (
+                {[1, 2, 3, 4, 5].map((i) => (
                   <div
                     key={i}
                     className={`h-1 rounded transition-all duration-300 ${i < step ? "bg-white" : "bg-white/20"}`}
-                    style={{ width: "calc(33.333% - 20px)" }}
+                    style={{ width: "calc(20% - 20px)" }}
                   />
                 ))}
               </div>
             </div>
 
             <div className="relative flex justify-between mb-3">
-              {[1, 2, 3, 4].map((s) => (
+              {[1, 2, 3, 4, 5].map((s) => (
                 <div
                   key={s}
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 z-10 ${s <= step ? "bg-white text-[#8B0000] shadow-xl scale-110" : "bg-white/20 text-white/50"
@@ -372,18 +406,21 @@ export default function ReservationsPage() {
               ))}
             </div>
 
-            <div className="flex justify-between">
+            <div className="flex justify-between text-center">
               <div className="text-center text-xs text-white/70 font-medium" style={{ width: "40px" }}>
-                Guest Info
+                Reservation Details
               </div>
               <div className="text-center text-xs text-white/70 font-medium" style={{ width: "40px" }}>
-                Contact
+                Guest Information
               </div>
               <div className="text-center text-xs text-white/70 font-medium" style={{ width: "40px" }}>
-                Date & Time
+                Occasion Details
               </div>
               <div className="text-center text-xs text-white/70 font-medium" style={{ width: "40px" }}>
-                Review
+                Payment Details
+              </div>
+              <div className="text-center text-xs text-white/70 font-medium" style={{ width: "40px" }}>
+                Confirmation
               </div>
             </div>
           </div>
@@ -394,26 +431,41 @@ export default function ReservationsPage() {
           <div className="bg-white h-1" />
 
           <div className="p-8 md:p-10">
-            {/* Step 1: Guest Info */}
+            {/* Step 1: Reservation Details */}
             {step === 1 && (
               <div>
                 <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-white mb-2">Let&apos;s start with your name</h2>
-                  <p className="text-white/70">Help us personalize your reservation</p>
+                  <h2 className="text-2xl font-bold text-white mb-2">Reservation Details</h2>
+                  <p className="text-white/70">Please provide the details for your reservation</p>
                 </div>
 
                 <div className="space-y-6">
                   <div className="relative">
-                    <label className="block text-sm font-semibold text-white mb-3">Full Name *</label>
+                    <label className="block text-sm font-semibold text-white mb-3">Date *</label>
                     <div className="relative">
-                      <User className="absolute left-4 top-3.5 w-5 h-5 text-[#ff6b6b] pointer-events-none" />
+                      <Calendar className="absolute left-4 top-3.5 w-5 h-5 text-[#ff6b6b] pointer-events-none" />
                       <input
-                        type="text"
-                        name="name"
-                        value={formData.name}
+                        type="date"
+                        name="date"
+                        value={formData.date}
                         onChange={handleChange}
                         required
-                        placeholder="Your name"
+                        className="w-full pl-12 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white placeholder-white/40"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <label className="block text-sm font-semibold text-white mb-3">Time *</label>
+                    <div className="relative">
+                      <Clock className="absolute left-4 top-3.5 w-5 h-5 text-[#ff6b6b] pointer-events-none" />
+                      <input
+                        type="time"
+                        name="time"
+                        value={formData.time}
+                        onChange={handleChange}
+                        min={getMinTime()}
+                        required
                         className="w-full pl-12 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white placeholder-white/40"
                       />
                     </div>
@@ -439,9 +491,31 @@ export default function ReservationsPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-end">
-                      <div className="w-full h-12 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 flex items-center justify-center text-sm font-semibold text-white">
-                        Perfect for your group!
+                    <div className="relative">
+                      <label className="block text-sm font-semibold text-white mb-3">Dining Preference *</label>
+                      <div className="relative">
+                        <Users className="absolute left-4 top-3.5 w-5 h-5 text-[#ff6b6b] pointer-events-none" />
+                        <select
+                          name="dining_preference"
+                          value={formData.dining_preference}
+                          onChange={handleChange}
+                          className="w-full pl-12 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg appearance-none text-white"
+                          required
+                        >
+                          {[
+                            "Main Dining",
+                            "Private Tatami Room",
+                            "Chef's Counter",
+                            "Window Seat",
+                            "Celebration Area",
+                            "Family Seating",
+                            "Group Dining",
+                          ].map((option) => (
+                            <option key={option} value={option} className="bg-[#8B0000] text-white">
+                              {option}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -449,15 +523,31 @@ export default function ReservationsPage() {
               </div>
             )}
 
-            {/* Step 2: Contact */}
+            {/* Step 2: Guest Information */}
             {step === 2 && (
               <div>
                 <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-white mb-2">How can we reach you?</h2>
-                  <p className="text-white/70">We&apos;ll send confirmation to this email</p>
+                  <h2 className="text-2xl font-bold text-white mb-2">Guest Information</h2>
+                  <p className="text-white/70">Tell us about your party and any special needs</p>
                 </div>
 
                 <div className="space-y-6">
+                  <div className="relative">
+                    <label className="block text-sm font-semibold text-white mb-3">Full Name *</label>
+                    <div className="relative">
+                      <User className="absolute left-4 top-3.5 w-5 h-5 text-[#ff6b6b] pointer-events-none" />
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        required
+                        placeholder="Full Name"
+                        className="w-full pl-12 pr-4 py-3 border rounded-xl bg-white/10 backdrop-blur-sm focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white placeholder-white/40 border-white/20"
+                      />
+                    </div>
+                  </div>
+
                   <div className="relative">
                     <label className="block text-sm font-semibold text-white mb-3">Email Address *</label>
                     <div className="relative">
@@ -483,7 +573,7 @@ export default function ReservationsPage() {
                     {user?.email && <p className="text-xs text-white/50 mt-1">Using your account email</p>}
                     {emailError && !user?.email && (
                       <div className="mt-2 p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 text-[#ff6b6b] flex-shrink-0 mt-0.5" />
+                        <AlertCircle className="w-4 h-4 text-[#ff6b6b] shrink-0 mt-0.5" />
                         <p className="text-[#ff6b6b] text-sm font-medium">{emailError}</p>
                       </div>
                     )}
@@ -507,182 +597,198 @@ export default function ReservationsPage() {
                     {phoneError && <p className="mt-2 text-sm text-[#ff6b6b]">{phoneError}</p>}
                   </div>
 
+                  <div className="relative">
+                    <label className="block text-sm font-semibold text-white mb-3">Special Request (Accessibility, Dietary, Celebrations)</label>
+                    <div className="relative">
+                      <MessageSquare className="absolute left-4 top-3.5 w-5 h-5 text-[#ff6b6b] pointer-events-none" />
+                      <input
+                        type="text"
+                        name="special_requests"
+                        value={formData.special_requests}
+                        onChange={handleChange}
+                        placeholder="Accessibility needs, dietary restrictions, celebrations, etc."
+                        className="w-full pl-12 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white placeholder-white/40"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Step 3: Date & Time, Special Request */}
+            {/* Step 3: Occasion Details */}
             {step === 3 && (
               <div>
                 <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-white mb-2">When would you like to join us?</h2>
-                  <p className="text-white/70">Pick your preferred date and time</p>
+                  <h2 className="text-2xl font-bold text-white mb-2">Occasion Details</h2>
+                  <p className="text-white/70">Let us know what you&apos;re celebrating or the purpose of your visit</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-6">
                   <div className="relative">
-                    <label className="block text-sm font-semibold text-white mb-3">Date *</label>
+                    <label className="block text-sm font-semibold text-white mb-3">Occasion Type *</label>
                     <div className="relative">
                       <Calendar className="absolute left-4 top-3.5 w-5 h-5 text-[#ff6b6b] pointer-events-none" />
-                      <input
-                        type="date"
-                        name="date"
-                        value={formData.date}
+                      <select
+                        name="occasion_type"
+                        value={formData.occasion_type || ""}
                         onChange={handleChange}
-                        min={getMinDate()}
                         required
-                        className="w-full pl-12 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white [color-scheme:dark]"
-                      />
+                        className="w-full pl-12 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg appearance-none text-white"
+                      >
+                        <option value="" disabled>Select occasion</option>
+                        <option value="Birthday">Birthday</option>
+                        <option value="Anniversary">Anniversary</option>
+                        <option value="Business Meeting">Business Meeting</option>
+                        <option value="Casual Dinner">Casual Dinner</option>
+                        <option value="Other">Other</option>
+                      </select>
                     </div>
-                    {checkingBookings && formData.date && (
-                      <p className="text-xs text-white/50 mt-1">Checking availability...</p>
-                    )}
-                    {!checkingBookings && formData.date && (
-                      <div className="mt-2">
-                        {isDailyLimitReached() ? (
-                          <div className="p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl flex items-start gap-2">
-                            <AlertCircle className="w-4 h-4 text-[#ff6b6b] flex-shrink-0 mt-0.5" />
-                            <p className="text-[#ff6b6b] text-sm font-medium">
-                              You&apos;ve reached the maximum of 2 reservations for this date. Please choose another date.
-                            </p>
-                          </div>
-                        ) : (
-                          <p className="text-xs text-white/50">
-                            You have {2 - dailyBookingsCount} reservation(s) remaining for this date.
-                          </p>
-                        )}
-                      </div>
-                    )}
                   </div>
 
                   <div className="relative">
-                    <label className="block text-sm font-semibold text-white mb-3">Time *</label>
+                    <label className="block text-sm font-semibold text-white mb-3">Special Instructions</label>
                     <div className="relative">
-                      <Clock className="absolute left-4 top-3.5 w-5 h-5 text-[#ff6b6b] pointer-events-none" />
+                      <MessageSquare className="absolute left-4 top-3.5 w-5 h-5 text-[#ff6b6b] pointer-events-none" />
                       <input
-                        type="time"
-                        name="time"
-                        value={formData.time}
+                        type="text"
+                        name="occasion_instructions"
+                        value={formData.occasion_instructions || ""}
                         onChange={handleChange}
-                        min={getMinTime()}
-                        required
-                        className="w-full pl-12 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white [color-scheme:dark]"
+                        placeholder="Anything else we should know?"
+                        className="w-full pl-12 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white placeholder-white/40"
                       />
                     </div>
-                    {isPastDateTime() && (
-                      <div className="mt-2 p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 text-[#ff6b6b] flex-shrink-0 mt-0.5" />
-                        <p className="text-[#ff6b6b] text-sm font-medium">Please select a future time.</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="relative mt-4">
-                  <label className="block text-sm font-semibold text-white mb-3">Special Request</label>
-                  <div className="relative">
-                    <MessageSquare className="absolute left-4 top-3.5 w-5 h-5 text-[#ff6b6b] pointer-events-none" />
-                    <input
-                      type="text"
-                      name="special_requests"  // <-- matches formData key
-                      value={formData.special_requests}
-                      onChange={handleChange}
-                      placeholder="Any special requests?"
-                      className="w-full pl-12 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white [color-scheme:dark]"
-                    />
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Step 4: Review */}
+            {/* Step 4: Payment Details */}
             {step === 4 && (
               <div>
                 <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-white mb-2">Review Your Reservation</h2>
-                  <p className="text-white/70">Please confirm your details before submitting</p>
+                  <h2 className="text-2xl font-bold text-white mb-2">Payment Details</h2>
+                  <p className="text-white/70">Secure your reservation with a payment (if applicable)</p>
                 </div>
 
-                <div className="space-y-4 mb-6">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="flex items-center gap-3">
-                      <User className="w-5 h-5 text-[#ff6b6b]" />
-                      <div>
-                        <p className="text-xs text-white/50">Guest Name</p>
-                        <p className="font-semibold text-white">{formData.name}</p>
-                      </div>
-                    </div>
+                <div className="space-y-6">
+                  <div className="relative">
+                    <label className="block text-sm font-semibold text-white mb-3">Reservation Fee</label>
+                    <input
+                      type="number"
+                      name="reservation_fee"
+                      value={formData.reservation_fee || ""}
+                      onChange={handleChange}
+                      placeholder="Enter amount (if required)"
+                      className="w-full pl-4 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white placeholder-white/40"
+                    />
                   </div>
 
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="flex items-center gap-3">
-                      <Users className="w-5 h-5 text-[#ff6b6b]" />
-                      <div>
-                        <p className="text-xs text-white/50">Number of Guests</p>
-                        <p className="font-semibold text-white">
-                          {formData.guests} {Number.parseInt(formData.guests) === 1 ? "Guest" : "Guests"}
-                        </p>
-                      </div>
-                    </div>
+                  <div className="relative">
+                    <label className="block text-sm font-semibold text-white mb-3">Payment Method *</label>
+                    <select
+                      name="payment_method"
+                      value={formData.payment_method || ""}
+                      onChange={handleChange}
+                      required
+                      className="w-full pl-4 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg appearance-none text-white"
+                    >
+                      <option value="" disabled>Select payment method</option>
+                      <option value="credit_card">Credit Card</option>
+                      <option value="paypal">PayPal</option>
+                      <option value="gcash">GCash</option>
+                      <option value="security_bank">Security Bank</option>
+                      <option value="other">Other</option>
+                    </select>
                   </div>
 
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="flex items-center gap-3">
-                      <Mail className="w-5 h-5 text-[#ff6b6b]" />
-                      <div>
-                        <p className="text-xs text-white/50">Email</p>
-                        <p className="font-semibold text-white">{formData.email}</p>
-                      </div>
-                    </div>
+                  <div className="relative">
+                    <label className="block text-sm font-semibold text-white mb-3">Reference Number</label>
+                    <input
+                      type="text"
+                      name="payment_reference"
+                      value={formData.payment_reference || ""}
+                      onChange={handleChange}
+                      placeholder="Enter payment reference number"
+                      className="w-full pl-4 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white placeholder-white/40"
+                    />
                   </div>
 
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="flex items-center gap-3">
-                      <Phone className="w-5 h-5 text-[#ff6b6b]" />
-                      <div>
-                        <p className="text-xs text-white/50">Phone</p>
-                        <p className="font-semibold text-white">{formData.phone}</p>
-                      </div>
-                    </div>
+                  <div className="relative">
+                    <label className="block text-sm font-semibold text-white mb-3">Receipt Screenshot</label>
+                    <input
+                      type="file"
+                      name="payment_receipt"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setFormData((prev) => ({ ...prev, payment_receipt: file }));
+                        }
+                      }}
+                      className="w-full pl-4 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white placeholder-white/40"
+                    />
+                    {formData.payment_receipt && (
+                      <div className="mt-2 text-white text-xs">Selected: {formData.payment_receipt.name}</div>
+                    )}
                   </div>
+                </div>
+              </div>
+            )}
 
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="flex items-center gap-3">
-                      <Calendar className="w-5 h-5 text-[#ff6b6b]" />
-                      <div>
-                        <p className="text-xs text-white/50">Date & Time</p>
-                        <p className="font-semibold text-white">
-                          {formData.date &&
-                            new Date(formData.date).toLocaleDateString("en-US", {
-                              weekday: "long",
-                              month: "long",
-                              day: "numeric",
-                              year: "numeric",
-                            })}{" "}
-                          at {formData.time}
-                        </p>
-                      </div>
-                    </div>
+            {/* Step 5: Reservation Details (Confirmation) */}
+            {step === 5 && (
+              <div>
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-white mb-2">Review & Confirm</h2>
+                  <p className="text-white/70">Please review your reservation details before submitting.</p>
+                </div>
+                <div className="space-y-4 bg-white/10 rounded-xl p-6 border border-white/20">
+                  <div className="flex flex-wrap gap-4">
+                    <span className="text-white/80 font-semibold">Date:</span>
+                    <span className="text-white">{formData.date}</span>
+                    <span className="text-white/80 font-semibold">Time:</span>
+                    <span className="text-white">{formData.time}</span>
+                    <span className="text-white/80 font-semibold">Guests:</span>
+                    <span className="text-white">{formData.guests}</span>
+                    <span className="text-white/80 font-semibold">Dining Preference:</span>
+                    <span className="text-white">{formData.dining_preference}</span>
                   </div>
-
+                  <div className="flex flex-wrap gap-4">
+                    <span className="text-white/80 font-semibold">Name:</span>
+                    <span className="text-white">{formData.name}</span>
+                    <span className="text-white/80 font-semibold">Email:</span>
+                    <span className="text-white">{formData.email}</span>
+                    <span className="text-white/80 font-semibold">Phone:</span>
+                    <span className="text-white">{formData.phone}</span>
+                  </div>g
+                  <div className="flex flex-wrap gap-4">
+                    <span className="text-white/80 font-semibold">Occasion:</span>
+                    <span className="text-white">{formData.occasion_type}</span>
+                    <span className="text-white/80 font-semibold">Instructions:</span>
+                    <span className="text-white">{formData.occasion_instructions || '-'}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-4">
+                    <span className="text-white/80 font-semibold">Reservation Fee:</span>
+                    <span className="text-white">₱{formData.reservation_fee || '0.00'}</span>
+                    <span className="text-white/80 font-semibold">Payment Method:</span>
+                    <span className="text-white">{formData.payment_method}</span>
+                    <span className="text-white/80 font-semibold">Reference:</span>
+                    <span className="text-white">{formData.payment_reference || '-'}</span>
+                    {formData.payment_receipt && (
+                      <span className="text-white/80 font-semibold">Receipt:</span>
+                    )}
+                    {formData.payment_receipt && (
+                      <span className="text-white">{formData.payment_receipt.name}</span>
+                    )}
+                  </div>
                   {formData.special_requests && (
-                    <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                      <div className="flex items-start gap-3">
-                        <MessageSquare className="w-5 h-5 text-[#ff6b6b] mt-0.5" />
-                        <div>
-                          <p className="text-xs text-white/50">Special Requests</p>
-                          <p className="font-semibold text-white">{formData.special_requests}</p>
-                        </div>
-                      </div>
+                    <div className="flex flex-wrap gap-4">
+                      <span className="text-white/80 font-semibold">Special Requests:</span>
+                      <span className="text-white">{formData.special_requests}</span>
                     </div>
                   )}
                 </div>
-
-                {message && message !== "success" && (
-                  <div className="mb-6 p-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl">
-                    <p className="text-[#ff6b6b] text-sm font-medium">{message}</p>
-                  </div>
-                )}
               </div>
             )}
 
@@ -697,7 +803,7 @@ export default function ReservationsPage() {
                 </button>
               )}
 
-              {step < 4 ? (
+              {step < 5 ? (
                 <button
                   onClick={() => setStep(step + 1)}
                   disabled={!isStepValid()}
