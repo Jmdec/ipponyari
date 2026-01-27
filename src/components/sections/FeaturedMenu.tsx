@@ -51,11 +51,16 @@ export default function FeaturedMenu() {
 
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 text-white drop-shadow-sm">
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="w-12 h-px bg-[#faf8f5]" />
+              <span className="text-xs lg:text-sm font-medium text-[#faf8f5] tracking-[0.2em] uppercase">Culinary Highlights</span>
+              <div className="w-12 h-px bg-[#faf8f5]" />
+            </div>
+            <h2 className="text-4xl lg:text-5xl font-bold mb-5 text-white drop-shadow-sm">
               Featured <span className="text-red-400 drop-shadow-sm">Dishes</span>
             </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto drop-shadow-sm">
-              Loading our most popular Japanese dishes...
+            <p className="text-md lg:text-lg text-gray-300 max-w-2xl mx-auto drop-shadow-sm">
+              Discover our most popular Japanese dishes, crafted with authentic flavors and fresh ingredients
             </p>
           </div>
 

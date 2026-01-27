@@ -23,6 +23,10 @@ interface Reservation {
   special_requests?: string
   status: "pending" | "confirmed" | "cancelled"
   created_at: string
+  reservation_fee_paid: boolean
+  payment_method?: string
+  payment_reference?: string
+  payment_screenshot?: string
 }
 
 type ReservationStatus = "pending" | "confirmed" | "cancelled"
@@ -392,6 +396,35 @@ export default function ReservationsAdmin() {
                         <SelectItem value="cancelled">Cancelled</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Payment Info */}
+                  <div className="border-t pt-3 mt-3">
+                    <label className="text-xs sm:text-sm font-semibold text-gray-600 block mb-1">Payment Info</label>
+                    <div className="space-y-1">
+                      <div>
+                        <span className="font-semibold">Status:</span>{" "}
+                        <span>{selectedReservation.reservation_fee_paid ? "Paid" : "Unpaid"}</span>
+                      </div>
+                      {selectedReservation.payment_method && (
+                        <div>
+                          <span className="font-semibold">Method:</span>{" "}
+                          <span>{selectedReservation.payment_method}</span>
+                        </div>
+                      )}
+                      {selectedReservation.payment_reference && (
+                        <div>
+                          <span className="font-semibold">Reference:</span>{" "}
+                          <span>{selectedReservation.payment_reference}</span>
+                        </div>
+                      )}
+                      {selectedReservation.payment_screenshot && (
+                        <div>
+                          <span className="font-semibold">Screenshot:</span>{" "}
+                          <a href={`/${selectedReservation.payment_screenshot}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View</a>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <Button

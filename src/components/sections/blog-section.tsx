@@ -66,11 +66,24 @@ export default function BlogSection() {
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-4 mb-4">
               <div className="w-12 h-px bg-[#c41e3a]" />
-              <span className="text-sm font-medium text-[#c41e3a] tracking-[0.2em] uppercase">Our Journal</span>
+              <span className="text-sm font-medium text-[#c41e3a] tracking-[0.2em] uppercase">Kitchen Chronicles</span>
               <div className="w-12 h-px bg-[#c41e3a]" />
             </div>
-            <h2 className="text-4xl font-semibold text-stone-900">Latest Stories</h2>
+            <h2 className="text-5xl font-bold mb-4">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-700 to-red-600">
+                Latest Stories
+              </span>
+            </h2>
+            <p className="text-lg text-gray-700">
+              Discover stories, recipes, and insights from our kitchen
+            </p>
             <p className="text-lg text-stone-600 mt-4">Loading stories...</p>
+          </div>
+          
+          <div className="flex justify-center gap-2 mt-6">
+            <div className="w-2 h-2 bg-[#ff6b6b] rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-[#ff6b6b] rounded-full animate-bounce delay-100"></div>
+            <div className="w-2 h-2 bg-[#ff6b6b] rounded-full animate-bounce delay-200"></div>
           </div>
         </div>
       </section>
@@ -218,9 +231,8 @@ export default function BlogSection() {
                     <button
                       key={i}
                       onClick={() => setCurrentIndex(i)}
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        i === currentIndex ? "bg-[#c41e3a] w-8" : "bg-stone-300 hover:bg-stone-400 w-2"
-                      }`}
+                      className={`h-2 rounded-full transition-all duration-300 ${i === currentIndex ? "bg-[#c41e3a] w-8" : "bg-stone-300 hover:bg-stone-400 w-2"
+                        }`}
                       aria-label={`Go to slide ${i + 1}`}
                     />
                   ))}
