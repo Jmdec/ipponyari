@@ -3,14 +3,19 @@ import { useState, useEffect } from "react"
 import type { MenuItem } from "@/types"
 import MenuItemCard from "@/components/ui/menu-item-card"
 import { Button } from "@/components/ui/button"
-import { Loader2, Download, X, Sparkles, ChefHat } from "lucide-react"
+import { Loader2, Download, X, Sparkles, ChefHat, Search } from "lucide-react"
 import Image from "next/image"
+
+const ITEMS_PER_PAGE = 12
 
 export default function MenuPage() {
   const [products, setProducts] = useState<MenuItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
   const [selectedCategory, setSelectedCategory] = useState("All")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
 
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [showInstallPopup, setShowInstallPopup] = useState(false)
@@ -21,40 +26,31 @@ export default function MenuPage() {
       e.preventDefault()
       setDeferredPrompt(e)
       setShowInstallButton(true)
-
       setTimeout(() => {
         setShowInstallPopup(true)
       }, 3000)
     }
-
     const handleAppInstalled = () => {
       setShowInstallPopup(false)
       setShowInstallButton(false)
       setDeferredPrompt(null)
     }
-
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
     window.addEventListener("appinstalled", handleAppInstalled)
-
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
       window.removeEventListener("appinstalled", handleAppInstalled)
     }
   }, [])
-
   const handleInstallApp = async () => {
     if (!deferredPrompt) return
-
     deferredPrompt.prompt()
     const { outcome } = await deferredPrompt.userChoice
-
     if (outcome === "accepted") {
       setShowInstallPopup(false)
     }
-
     setDeferredPrompt(null)
   }
-
   const handleDismissPopup = () => {
     setShowInstallPopup(false)
   }
@@ -63,28 +59,24 @@ export default function MenuPage() {
     const fetchProducts = async () => {
       try {
         setLoading(true)
-        setError(null)
+        const res = await fetch("/api/product?paginate=false")
+        if (!res.ok) throw new Error("Failed to fetch products")
+        const data = await res.json()
 
-        const response = await fetch("/api/product?paginate=false")
-        if (!response.ok) throw new Error("Failed to fetch products")
-        const data = await response.json()
-
-        const transformedProducts: MenuItem[] = data.map((product: any) => ({
-          id: product.id,
-          name: product.name,
-          description: product.description,
-          price: typeof product.price === "string" ? Number.parseFloat(product.price) : product.price,
-          category: product.category,
-          image: product.image,
-          isSpicy: product.is_spicy || false,
-          isVegetarian: product.is_vegetarian || false,
+        const transformed: MenuItem[] = data.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          price: Number(p.price),
+          category: p.category,
+          image: p.image,
+          isSpicy: p.is_spicy || false,
+          isVegetarian: p.is_vegetarian || false,
         }))
 
-        setProducts(transformedProducts)
-      } catch (err) {
-        console.error(err)
-        setError(err instanceof Error ? err.message : "Failed to fetch products")
-        setProducts([])
+        setProducts(transformed)
+      } catch (err: any) {
+        setError(err.message)
       } finally {
         setLoading(false)
       }
@@ -93,31 +85,35 @@ export default function MenuPage() {
     fetchProducts()
   }, [])
 
-  const categories = ["All", ...Array.from(new Set(products.map((p) => p.category)))]
-  const filtered = selectedCategory === "All" ? products : products.filter((p) => p.category === selectedCategory)
+  const categories = ["All", ...Array.from(new Set(products.map(p => p.category)))]
+
+  const filtered = products.filter(item => {
+    const matchCategory =
+      selectedCategory === "All" || item.category === selectedCategory
+
+    const q = searchQuery.toLowerCase()
+    const matchSearch =
+      item.name.toLowerCase().includes(q) ||
+      item.description?.toLowerCase().includes(q)
+
+    return matchCategory && matchSearch
+  })
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
+
+  const paginatedItems = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  )
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [selectedCategory, searchQuery])
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#fff5f5] via-[#ffe8e8] to-[#ffdbdb] flex items-center justify-center relative overflow-hidden">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-10 w-32 h-32 bg-[#dc143c]/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-10 w-40 h-40 bg-[#dc143c]/10 rounded-full blur-3xl animate-pulse delay-700"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#dc143c]/5 rounded-full blur-3xl animate-pulse delay-300"></div>
-        </div>
-
-        <div className="flex flex-col items-center gap-4 bg-white/90 backdrop-blur-xl px-8 py-6 rounded-2xl border-2 border-[#dc143c]/20 shadow-2xl relative z-10">
-          <ChefHat className="h-12 w-12 text-[#dc143c] animate-bounce" />
-          <div className="flex items-center gap-3">
-            <Loader2 className="h-6 w-6 animate-spin text-[#dc143c]" />
-            <span className="text-gray-700 font-semibold text-lg">Preparing your menu...</span>
-          </div>
-          <div className="flex gap-1">
-            <div className="w-2 h-2 bg-[#dc143c] rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-[#dc143c] rounded-full animate-bounce delay-100"></div>
-            <div className="w-2 h-2 bg-[#dc143c] rounded-full animate-bounce delay-200"></div>
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#8B0000]">
+        <Loader2 className="h-10 w-10 animate-spin text-white" />
       </div>
     )
   }
@@ -150,7 +146,6 @@ export default function MenuPage() {
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#dc143c]/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
         <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-[#dc143c]/20 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
-
       {/* Install Button - Mobile Only */}
       {(true || showInstallButton) && (
         <div className="fixed bottom-6 left-4 z-50 md:hidden animate-in slide-in-from-bottom duration-500">
@@ -164,7 +159,6 @@ export default function MenuPage() {
           </Button>
         </div>
       )}
-
       {/* Install App Popup */}
       {showInstallPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
@@ -175,7 +169,6 @@ export default function MenuPage() {
             >
               <X className="h-5 w-5" />
             </button>
-
             <div className="bg-gradient-to-br from-[#dc143c] to-[#7f0020] pt-10 pb-8 px-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10"></div>
               <div className="flex justify-center mb-4 relative">
@@ -183,15 +176,12 @@ export default function MenuPage() {
                   <Image src="/icon-512x512.png" alt="Ipponyari Logo" width={140} height={140} className="object-cover" />
                 </div>
               </div>
-
               <h2 className="text-2xl font-bold text-white text-center mb-2">Install Ipponyari App</h2>
-
               <p className="text-white/95 text-center text-sm leading-relaxed flex items-center justify-center gap-2">
                 <Sparkles className="h-4 w-4" />
                 Quick access • Faster ordering • Exclusive offers
               </p>
             </div>
-
             <div className="p-6 space-y-3">
               <Button
                 onClick={handleInstallApp}
@@ -200,7 +190,6 @@ export default function MenuPage() {
                 <Download className="h-5 w-5 mr-2" />
                 Install Now
               </Button>
-
               <Button
                 onClick={handleDismissPopup}
                 variant="ghost"
@@ -212,7 +201,6 @@ export default function MenuPage() {
           </div>
         </div>
       )}
-
       <div className="max-w-7xl mx-auto p-4 relative z-10">
         {/* Hero Header with Animation */}
         <div className="text-center mb-12 animate-in fade-in slide-in-from-top duration-700">
@@ -222,19 +210,15 @@ export default function MenuPage() {
               <span className="text-[#ff6b6b] font-medium text-xs uppercase tracking-widest">Authentic Japanese Cuisine</span>
             </div>
           </div>
-          
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-2 drop-shadow-2xl animate-in zoom-in duration-500">
             Your Table Awaits
           </h1>
-          
           <h2 className="text-4xl md:text-6xl font-bold text-[#ff6b6b] mb-6 drop-shadow-xl">
             Ipponyari Menu
           </h2>
-          
           <p className="text-white/80 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
             Reserve your seat today and savor the finest Japanese dishes, prepared fresh daily by our master chefs
           </p>
-
           {/* Decorative elements */}
           <div className="flex justify-center gap-2 mt-6">
             <div className="w-2 h-2 bg-[#ff6b6b] rounded-full animate-bounce"></div>
@@ -243,54 +227,84 @@ export default function MenuPage() {
           </div>
         </div>
 
-        {/* Enhanced Category Filters */}
-        <div className="flex flex-wrap justify-center gap-3 mb-10 animate-in fade-in slide-in-from-bottom duration-700 delay-200">
-          {categories.map((category, index) => (
-            <Button
-              key={category}
-              variant={selectedCategory === category ? "default" : "outline"}
-              onClick={() => setSelectedCategory(category)}
-              style={{ animationDelay: `${index * 50}ms` }}
-              className={`${
-                selectedCategory === category
-                  ? "bg-white text-[#8B0000] hover:bg-white/90 shadow-lg scale-105 border-2 border-white"
-                  : "bg-white/10 backdrop-blur-sm text-white border-2 border-white/30 hover:bg-white/20 hover:border-white hover:scale-105"
-              } transition-all duration-300 font-semibold px-6 py-3 rounded-full shadow-md hover:shadow-xl animate-in zoom-in`}
-            >
-              {category}
-            </Button>
-          ))}
-        </div>
+        {/* Search and Category Filter */}
+        <div className="flex flex-col md:flex-row justify-center items-center gap-4 px-4 mb-10">
 
-        {/* Menu Items Grid */}
-        {filtered.length === 0 ? (
-          <div className="text-center py-20 animate-in fade-in duration-500">
-            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-12 max-w-md mx-auto shadow-xl border-2 border-white/20">
-              <ChefHat className="h-16 w-16 text-white/50 mx-auto mb-4" />
-              <p className="text-white text-lg font-medium mb-2">
-                {selectedCategory === "All" ? "No menu items available" : `No items in ${selectedCategory}`}
-              </p>
-              <p className="text-white/70 text-sm">Check back soon for delicious updates!</p>
+          {/* Search */}
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search dishes..."
+              className="w-full rounded-xl bg-white/90 px-11 py-3 text-sm font-medium
+              text-[#8B0000] shadow-lg border border-white/30
+              focus:outline-none focus:ring-2 focus:ring-[#ff6b6b]"
+            />
+          </div>
+
+          {/* Category Dropdown */}
+          <div className="relative w-full max-w-xs">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full appearance-none rounded-xl bg-white/90 px-5 py-3
+              font-semibold text-[#8B0000] shadow-lg border border-white/30
+              focus:outline-none focus:ring-2 focus:ring-[#ff6b6b]"
+            >
+              {categories.map(category => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
+
+            <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
+              <svg className="h-4 w-4 text-[#8B0000]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
             </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-fr">
-            {filtered.map((product, index) => (
-              <div
-                key={product.id}
-                style={{ animationDelay: `${index * 50}ms` }}
-                className="animate-in fade-in zoom-in duration-500"
-              >
-                <MenuItemCard item={product} />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        </div>
 
-      {/* Floating decoration elements */}
-      <div className="fixed bottom-10 right-10 pointer-events-none opacity-10 hidden lg:block">
-        <ChefHat className="h-32 w-32 text-white animate-pulse" />
+        {/* Menu Items */}
+        <div className="max-w-7xl mx-auto pb-16">
+          {paginatedItems.length === 0 ? (
+            <p className="text-center text-white/70">No items found.</p>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-12">
+              {paginatedItems.map(item => (
+                <div key={item.id} className="transform hover:scale-105 transition-all duration-300">
+                  <MenuItemCard key={item.id} item={item} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 mt-12">
+              <Button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => p - 1)}
+                className="rounded-full px-6 disabled:opacity-40 bg-red-700/80 hover:bg-red-600/90 text-white"
+              >
+                Prev
+              </Button>
+
+              <span className="text-white/80 text-sm">
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <Button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => p + 1)}
+                className="rounded-full px-6 disabled:opacity-40 bg-red-900/80 hover:bg-red-600/90 text-white"
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

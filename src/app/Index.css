@@ -1,3 +1,5 @@
+@tailwind base;
+@tailwind components;
 @tailwind utilities;
 
 /* OPPA Restaurant Design System - Korean inspired warm color palette */

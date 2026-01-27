@@ -29,6 +29,7 @@ export default function ReservationsPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
   const [emailError, setEmailError] = useState("")
+  const [phoneError, setPhoneError] = useState("")
   const [dailyBookingsCount, setDailyBookingsCount] = useState(0)
   const [checkingBookings, setCheckingBookings] = useState(false)
 
@@ -83,11 +84,31 @@ export default function ReservationsPage() {
     checkDailyBookings()
   }, [formData.date, user])
 
-  const handleChange = (e: { target: { name: any; value: any } }) => {
+  const handleChange = (e: { target: { name: string; value: string } }) => {
     const { name, value } = e.target
 
     if (name === "email") {
-      setEmailError("")
+      setFormData((prev) => ({ ...prev, [name]: value }))
+      if (!isValidEmail(value)) {
+        setEmailError("Please enter a valid email address")
+      } else {
+        setEmailError("")
+      }
+      return
+    }
+
+    if (name === "phone") {
+      // Remove all non-digit characters for counting
+      const digitsOnly = value.replace(/\D/g, "")
+      if (digitsOnly.length > 11) {
+        setPhoneError("Phone number cannot exceed 11 digits")
+      } else if (!/^[0-9+()\- ]*$/.test(value)) {
+        setPhoneError("Phone number can only contain digits, +, - or ()")
+      } else {
+        setPhoneError("")
+        setFormData((prev) => ({ ...prev, [name]: value }))
+      }
+      return
     }
 
     if (name === "date") {
@@ -101,9 +122,10 @@ export default function ReservationsPage() {
         }
         return newData
       })
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }))
+      return
     }
+
+    setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const getMinDate = () => {
@@ -143,7 +165,15 @@ export default function ReservationsPage() {
       case 1:
         return formData.name.trim() !== ""
       case 2:
-        return formData.email.trim() !== "" && isValidEmail(formData.email) && formData.phone.trim() !== ""
+        const phoneDigits = formData.phone.replace(/\D/g, "")
+        return (
+          formData.email.trim() !== "" &&
+          isValidEmail(formData.email) &&
+          formData.phone.trim() !== "" &&
+          phoneDigits.length === 11 &&
+          !phoneError &&
+          !emailError
+        )
       case 3:
         if (formData.date === "" || formData.time === "") return false
         if (isPastDateTime()) return false
@@ -173,6 +203,8 @@ export default function ReservationsPage() {
         return
       }
 
+      console.log("📝 Submitting reservation with data:", formData)
+
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -185,17 +217,34 @@ export default function ReservationsPage() {
         body: JSON.stringify(formData),
       })
 
-      const data = await response.json()
+      console.log("📨 Response Status:", response.status)
+
+      const responseText = await response.text()
+      console.log("📨 Response Text:", responseText)
+
+      let data
+      try {
+        data = JSON.parse(responseText)
+      } catch (e) {
+        console.error("Failed to parse response:", responseText)
+        setMessage("Server error: Invalid response format")
+        return
+      }
+
+      console.log("📨 Parsed Response:", data)
 
       if (!response.ok) {
-        if (response.status === 400 && (data.message?.includes("maximum") || data.message?.includes("limit"))) {
-          setMessage(data.message || "You have reached the maximum of 2 reservations for this date.")
+        const errorMsg = data.message || data.error || "Failed to create reservation"
+        console.error("❌ Error:", errorMsg)
+        if (response.status === 400 && (errorMsg?.includes("maximum") || errorMsg?.includes("limit"))) {
+          setMessage(errorMsg)
         } else {
-          setMessage(data.message || "Failed to create reservation")
+          setMessage(errorMsg)
         }
         return
       }
 
+      console.log("✅ Reservation created successfully")
       setMessage("success")
 
       setTimeout(() => {
@@ -211,10 +260,11 @@ export default function ReservationsPage() {
         })
         setMessage("")
         setDailyBookingsCount(0)
+        window.location.href = "/reservation-history"
       }, 3000)
     } catch (error) {
-      console.error("Reservation error:", error)
-      setMessage("error")
+      console.error("❌ Reservation error:", error)
+      setMessage(error instanceof Error ? error.message : "An error occurred")
     } finally {
       setLoading(false)
     }
@@ -234,7 +284,7 @@ export default function ReservationsPage() {
             <CheckCircle className="w-14 h-14 text-[#dc143c]" />
           </div>
           <h2 className="text-4xl font-black text-white mb-3 drop-shadow-lg">Reservation Confirmed!</h2>
-          <p className="text-xl text-white/90 mb-2">We're excited to see you at Ipponyari</p>
+          <p className="text-xl text-white/90 mb-2">We&apos;re excited to see you at Ipponyari</p>
           <p className="text-white/70 mb-6">Check your email for confirmation details</p>
 
           <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4 mb-6">
@@ -314,9 +364,8 @@ export default function ReservationsPage() {
               {[1, 2, 3, 4].map((s) => (
                 <div
                   key={s}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 z-10 ${
-                    s <= step ? "bg-white text-[#8B0000] shadow-xl scale-110" : "bg-white/20 text-white/50"
-                  }`}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 z-10 ${s <= step ? "bg-white text-[#8B0000] shadow-xl scale-110" : "bg-white/20 text-white/50"
+                    }`}
                 >
                   {s}
                 </div>
@@ -349,7 +398,7 @@ export default function ReservationsPage() {
             {step === 1 && (
               <div>
                 <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-white mb-2">Let's start with your name</h2>
+                  <h2 className="text-2xl font-bold text-white mb-2">Let&apos;s start with your name</h2>
                   <p className="text-white/70">Help us personalize your reservation</p>
                 </div>
 
@@ -405,7 +454,7 @@ export default function ReservationsPage() {
               <div>
                 <div className="mb-8">
                   <h2 className="text-2xl font-bold text-white mb-2">How can we reach you?</h2>
-                  <p className="text-white/70">We'll send confirmation to this email</p>
+                  <p className="text-white/70">We&apos;ll send confirmation to this email</p>
                 </div>
 
                 <div className="space-y-6">
@@ -425,12 +474,10 @@ export default function ReservationsPage() {
                         }}
                         required
                         placeholder="your@email.com"
-                        disabled={!!user?.email}
-                        className={`w-full pl-12 pr-4 py-3 rounded-xl focus:outline-none transition-all text-lg disabled:bg-white/5 disabled:text-white/50 text-white placeholder-white/40 bg-white/10 backdrop-blur-sm ${
-                          emailError
-                            ? "border-white focus:border-white focus:ring-2 focus:ring-white/30"
-                            : "border-white/20 focus:border-white focus:ring-2 focus:ring-white/30"
-                        } border`}
+                        className={`w-full pl-12 pr-4 py-3 rounded-xl focus:outline-none transition-all text-lg disabled:bg-white/5 disabled:text-white/50 text-white placeholder-white/40 bg-white/10 backdrop-blur-sm ${emailError
+                          ? "border-white focus:border-white focus:ring-2 focus:ring-white/30"
+                          : "border-white/20 focus:border-white focus:ring-2 focus:ring-white/30"
+                          } border`}
                       />
                     </div>
                     {user?.email && <p className="text-xs text-white/50 mt-1">Using your account email</p>}
@@ -452,16 +499,19 @@ export default function ReservationsPage() {
                         value={formData.phone}
                         onChange={handleChange}
                         required
-                        placeholder="+63 912 345 6789"
-                        className="w-full pl-12 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white placeholder-white/40"
+                        placeholder="09123456789"
+                        className={`w-full pl-12 pr-4 py-3 border rounded-xl bg-white/10 backdrop-blur-sm focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white placeholder-white/40 ${phoneError ? "border-red-500" : "border-white/20"
+                          }`}
                       />
                     </div>
+                    {phoneError && <p className="mt-2 text-sm text-[#ff6b6b]">{phoneError}</p>}
                   </div>
+
                 </div>
               </div>
             )}
 
-            {/* Step 3: Date & Time */}
+            {/* Step 3: Date & Time, Special Request */}
             {step === 3 && (
               <div>
                 <div className="mb-8">
@@ -469,7 +519,7 @@ export default function ReservationsPage() {
                   <p className="text-white/70">Pick your preferred date and time</p>
                 </div>
 
-                <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="relative">
                     <label className="block text-sm font-semibold text-white mb-3">Date *</label>
                     <div className="relative">
@@ -493,7 +543,7 @@ export default function ReservationsPage() {
                           <div className="p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl flex items-start gap-2">
                             <AlertCircle className="w-4 h-4 text-[#ff6b6b] flex-shrink-0 mt-0.5" />
                             <p className="text-[#ff6b6b] text-sm font-medium">
-                              You've reached the maximum of 2 reservations for this date. Please choose another date.
+                              You&apos;ve reached the maximum of 2 reservations for this date. Please choose another date.
                             </p>
                           </div>
                         ) : (
@@ -525,6 +575,21 @@ export default function ReservationsPage() {
                         <p className="text-[#ff6b6b] text-sm font-medium">Please select a future time.</p>
                       </div>
                     )}
+                  </div>
+                </div>
+
+                <div className="relative mt-4">
+                  <label className="block text-sm font-semibold text-white mb-3">Special Request</label>
+                  <div className="relative">
+                    <MessageSquare className="absolute left-4 top-3.5 w-5 h-5 text-[#ff6b6b] pointer-events-none" />
+                    <input
+                      type="text"
+                      name="special_requests"  // <-- matches formData key
+                      value={formData.special_requests}
+                      onChange={handleChange}
+                      placeholder="Any special requests?"
+                      className="w-full pl-12 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white [color-scheme:dark]"
+                    />
                   </div>
                 </div>
               </div>

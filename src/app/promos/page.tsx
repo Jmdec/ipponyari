@@ -74,7 +74,7 @@ export default function PromosPage() {
             <Sparkles className="w-5 h-5 text-[#ff6b6b] animate-pulse" />
             <span className="text-white font-semibold text-sm uppercase tracking-wider">Special Offers</span>
           </div>
-          
+
           <h1 className="text-5xl md:text-6xl font-bold mb-4 text-white drop-shadow-2xl">
             Promotions & <span className="text-[#ff6b6b]">Announcements</span>
           </h1>
@@ -107,7 +107,7 @@ export default function PromosPage() {
                   <Card
                     key={announcement.id}
                     style={{ animationDelay: `${index * 100}ms` }}
-                    className="group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-white/10 hover:border-white/30 overflow-hidden relative cursor-pointer bg-white/5 backdrop-blur-sm animate-in fade-in zoom-in"
+                    className="group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-white/10 hover:border-white/30 relative cursor-pointer bg-red-700/50 animate-in fade-in zoom-in"
                     onClick={() => setSelectedAnnouncement(announcement)}
                   >
                     <div className="absolute top-4 right-4 z-10">{getStatusBadge(announcement.is_active)}</div>
@@ -116,26 +116,18 @@ export default function PromosPage() {
                     <div className="absolute inset-0 bg-gradient-to-br from-[#ff6b6b]/0 to-[#ff6b6b]/0 group-hover:from-[#ff6b6b]/10 group-hover:to-transparent transition-all duration-300 pointer-events-none"></div>
 
                     <CardHeader className="relative">
-                      <CardTitle className="text-white pr-20 group-hover:text-[#ff6b6b] transition-colors">
+                      <CardTitle className="text-2xl font-bold text-white pr-20 group-hover:text-[#ff6b6b] transition-colors">
                         {announcement.title}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4 relative">
-                      <p className="text-white/70 line-clamp-3">{announcement.content}</p>
-
-                      <div className="bg-[#ff6b6b]/20 backdrop-blur-sm p-4 rounded-lg border border-[#ff6b6b]/30">
-                        <div className="flex items-center gap-2">
-                          <Megaphone className="w-5 h-5 text-[#ff6b6b] animate-pulse" />
-                          <span className="text-sm font-semibold text-white">Special Offer</span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2 text-sm text-white/60">
+                      <div className="text-sm text-white/60">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-[#ff6b6b]" />
                           <span>{formatDate(announcement.created_at)}</span>
                         </div>
                       </div>
+                      <p className="text-white/70 line-clamp-3 items-baseline">{announcement.content}</p>
                     </CardContent>
                   </Card>
                 ))}

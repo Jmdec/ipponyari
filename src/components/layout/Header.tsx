@@ -21,6 +21,7 @@ import {
   Gift,
   MessageSquare,
   FolderClock,
+  Phone,
 } from "lucide-react"
 import Image from "next/image"
 import { useCartStore } from "@/store/cartStore"
@@ -128,7 +129,7 @@ const Header = () => {
     { name: "Blog", href: "/blog", icon: BookOpen },
     { name: "Promos", href: "/promos", icon: Gift },
     { name: "Testimonials", href: "/testimonials", icon: MessageSquare },
-    { name: "Contact Us", href: "/contact", icon: MessageSquare },
+    { name: "Contact Us", href: "/contact", icon: Phone },
   ]
 
   const isActivePage = (href: string) => {
@@ -147,9 +148,9 @@ const Header = () => {
             <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 overflow-hidden group-hover:scale-105 transition-transform duration-300">
               <Image src="/logoippon.png" alt="Ipponyari Logo" fill className="object-contain" />
             </div>
-            <div className="hidden sm:block">
-              <span className="text-lg font-bold text-gray-900 tracking-wide">IPPONYARI</span>
-              <p className="text-xs text-[#dc143c] tracking-widest font-medium">JAPANESE RESTAURANT</p>
+            <div className="flex-1">
+              <span className="text-md lg:text-lg font-bold text-gray-900 tracking-wide">IPPONYARI</span>
+              <p className="text-xs lg:text-xs text-[#dc143c] tracking-widest font-medium">JAPANESE RESTAURANT</p>
             </div>
           </Link>
 
@@ -159,11 +160,10 @@ const Header = () => {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center space-x-2 px-3 py-2 text-sm font-medium transition-all duration-300 rounded-lg ${
-                  isActivePage(item.href)
-                    ? "bg-[#dc143c] text-white shadow-md"
-                    : "text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c]"
-                }`}
+                className={`flex items-center space-x-2 px-3 py-2 text-sm font-medium transition-all duration-300 rounded-lg ${isActivePage(item.href)
+                  ? "bg-[#dc143c] text-white shadow-md"
+                  : "text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c]"
+                  }`}
               >
                 <item.icon className="h-4 w-4" />
                 <span>{item.name}</span>
@@ -179,73 +179,47 @@ const Header = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleInstallApp}
-                className="hidden md:flex items-center space-x-1 border-[#dc143c]/50 text-[#dc143c] hover:bg-[#dc143c]/10 hover:border-[#dc143c] bg-transparent text-xs"
+                className="hidden lg:flex items-center space-x-1 border-[#dc143c]/50 text-[#dc143c] hover:bg-[#dc143c]/10 hover:border-[#dc143c] bg-transparent text-xs"
               >
                 <Download className="h-3 w-3" />
                 <span>Install</span>
               </Button>
             )}
 
-            {/* Action Buttons when logged in */}
-            {user && (
-              <>
-                <Link href="/cart" className="hidden md:block">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="relative border-[#dc143c]/30 text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c] hover:border-[#dc143c] transition-all duration-300 p-2 h-10 w-10 bg-transparent"
-                    title="Cart"
-                  >
-                    <ShoppingCart className="h-5 w-5" />
-                    {itemCount > 0 && (
-                      <Badge className="absolute -top-2 -right-2 px-1.5 min-w-[18px] h-5 flex items-center justify-center text-xs bg-[#dc143c] text-white border-2 border-white shadow-md font-bold">
-                        {itemCount}
-                      </Badge>
-                    )}
-                  </Button>
-                </Link>
-
-                <Link href="/events-history" className="hidden md:block">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-[#dc143c]/30 text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c] hover:border-[#dc143c] transition-all duration-300 p-2 h-10 w-10 bg-transparent"
-                    title="Events"
-                  >
-                    <FolderClock className="h-5 w-5" />
-                  </Button>
-                </Link>
-
-                <Link href="/reservation-history" className="hidden md:block">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-[#dc143c]/30 text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c] hover:border-[#dc143c] transition-all duration-300 p-2 h-10 w-10 bg-transparent"
-                    title="Reservations"
-                  >
-                    <Calendar className="h-5 w-5" />
-                  </Button>
-                </Link>
-              </>
-            )}
-
             {user ? (
               <div className="relative group">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="relative bg-[#dc143c] border-[#dc143c] text-white hover:bg-[#b01030] transition-all duration-300 shadow-md p-2 h-10 w-10"
-                >
-                  <User className="h-5 w-5" />
-                </Button>
+                <div className="flex items-center space-x-2 cursor-pointer">
+                  <Link href="/cart" className="block">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="relative border-[#dc143c]/30 text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c] hover:border-[#dc143c] transition-all duration-300 p-2 h-10 w-10 bg-transparent"
+                      title="Cart"
+                    >
+                      <ShoppingCart className="h-5 w-5" />
+                      {itemCount > 0 && (
+                        <Badge className="absolute -top-2 -right-2 px-1.5 min-w-[18px] h-5 flex items-center justify-center text-xs bg-[#dc143c] text-white border-2 border-white shadow-md font-bold">
+                          {itemCount}
+                        </Badge>
+                      )}
+                    </Button>
+                  </Link>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="relative bg-[#dc143c] border-[#dc143c] text-white hover:bg-[#b01030] transition-all duration-300 shadow-md p-2 h-10 w-10"
+                  >
+                    <User className="h-5 w-5" />
+                  </Button>
+                </div>
 
                 <div
-                  className={`absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 transition-all duration-200 ${
-                    isDropdownOpen
-                      ? "opacity-100 visible"
-                      : "opacity-0 invisible group-hover:opacity-100 group-hover:visible"
-                  }`}
+                  className={`absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 transition-all duration-200 ${isDropdownOpen
+                    ? "opacity-100 visible"
+                    : "opacity-0 invisible group-hover:opacity-100 group-hover:visible"
+                    }`}
                 >
                   {/* User Info */}
                   <div className="px-4 py-3 border-b border-gray-100">
@@ -257,18 +231,6 @@ const Header = () => {
                     <div className="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c] transition-colors cursor-pointer">
                       <User className="h-4 w-4" />
                       <span className="text-sm font-medium">Profile</span>
-                    </div>
-                  </Link>
-
-                  <Link href="/cart" onClick={() => setIsDropdownOpen(false)} className="block">
-                    <div className="flex items-center justify-between px-4 py-2.5 text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c] transition-colors cursor-pointer">
-                      <div className="flex items-center space-x-3">
-                        <ShoppingCart className="h-4 w-4" />
-                        <span className="text-sm font-medium">Cart</span>
-                      </div>
-                      {itemCount > 0 && (
-                        <Badge className="bg-[#dc143c] text-white px-2 py-0.5 text-xs">{itemCount}</Badge>
-                      )}
                     </div>
                   </Link>
 
@@ -333,8 +295,8 @@ const Header = () => {
               <SheetContent side="right" className="w-[280px] sm:w-[320px] bg-white border-l border-gray-200 p-0">
                 <div className="flex flex-col h-full">
                   {/* Mobile Menu Header */}
-                  <div className="flex items-center space-x-3 px-4 border-b border-gray-100 bg-gray-50">
-                    <div className="relative w-20 h-20 overflow-hidden flex-shrink-0">
+                  <div className="flex items-center space-x-3 p-4 border-b border-gray-100 bg-gray-50">
+                    <div className="relative w-12 h-12 overflow-hidden flex-shrink-0">
                       <Image src="/logoippon.png" alt="Ipponyari Logo" fill className="object-contain" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -367,11 +329,10 @@ const Header = () => {
                             key={item.name}
                             href={item.href}
                             onClick={() => setIsOpen(false)}
-                            className={`flex items-center space-x-3 w-full text-left px-3 py-3 text-base font-medium rounded-lg transition-all duration-300 ${
-                              isActivePage(item.href)
-                                ? "bg-[#dc143c] text-white shadow-md"
-                                : "text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c]"
-                            }`}
+                            className={`flex items-center space-x-3 w-full text-left px-3 py-3 text-base font-medium rounded-lg transition-all duration-300 ${isActivePage(item.href)
+                              ? "bg-[#dc143c] text-white shadow-md"
+                              : "text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c]"
+                              }`}
                           >
                             <item.icon className="h-5 w-5 flex-shrink-0" />
                             <span>{item.name}</span>

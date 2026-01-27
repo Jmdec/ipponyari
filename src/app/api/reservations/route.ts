@@ -218,8 +218,11 @@ async function sendCustomerConfirmation(reservationData: any) {
 export async function GET(request: NextRequest) {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL
-    const authHeader = request.headers.get("authorization")
+    if (!apiUrl) {
+      throw new Error("NEXT_PUBLIC_API_URL is not configured")
+    }
 
+    const authHeader = request.headers.get("authorization")
     console.log("GET Reservations - Auth Header:", authHeader ? "Present" : "Missing")
 
     const headers: Record<string, string> = {
@@ -231,24 +234,43 @@ export async function GET(request: NextRequest) {
       headers["Authorization"] = authHeader
     }
 
-    const response = await fetch(`${apiUrl}/api/reservations`, {
+    const url = `${apiUrl}/api/reservations`
+    console.log("Fetching from:", url)
+
+    const response = await fetch(url, {
       method: "GET",
       headers,
     })
 
     console.log("Laravel Response Status:", response.status)
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      console.error("Laravel Error:", errorData)
-      throw new Error(`Failed to fetch reservations: ${response.status}`)
+    const responseText = await response.text()
+    let data
+    try {
+      data = JSON.parse(responseText)
+    } catch (e) {
+      console.error("Failed to parse response:", responseText)
+      throw new Error("Invalid JSON response from server")
     }
 
-    const data = await response.json()
+    if (!response.ok) {
+      console.error("Laravel Error:", data)
+      return NextResponse.json(
+        { error: data.message || "Failed to fetch reservations", data: data },
+        { status: response.status }
+      )
+    }
+
     return NextResponse.json(data)
   } catch (error) {
     console.error("Reservations GET API Error:", error)
-    return NextResponse.json({ error: "Failed to fetch reservations" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Failed to fetch reservations",
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    )
   }
 }
 

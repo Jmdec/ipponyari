@@ -117,7 +117,7 @@ export default function Contact() {
             Contact <span className="text-[#ff6b6b]">Us</span>
           </h1>
           <p className="text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
-            Have questions about our menu or want to make a reservation? We'd love to hear from you!
+            Have questions about our menu or want to make a reservation? We&apos;d love to hear from you!
           </p>
         </div>
 
@@ -128,13 +128,13 @@ export default function Contact() {
                 <CardContent className="p-6 text-center">
                   <MapPin className="w-8 h-8 text-[#ff6b6b] mx-auto mb-3" />
                   <h3 className="font-semibold mb-2 text-white">Visit Us</h3>
-                  <a 
-                    href="https://maps.app.goo.gl/5NYrsNXawKobjQCf9" 
-                    target="_blank" 
+                  <a
+                    href="https://maps.app.goo.gl/5NYrsNXawKobjQCf9"
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-white hover:text-[#ff6b6b] hover:underline transition-colors"
                   >
-                    Santa Rosa-Tagaytay Road, Santa Rosa, Philippines
+                    Mitsukoshi Mall, Ground Floor, 8th Avenue, corner 36th St, Taguig, Metro Manila
                   </a>
                 </CardContent>
               </Card>
@@ -143,11 +143,11 @@ export default function Contact() {
                 <CardContent className="p-6 text-center">
                   <Phone className="w-8 h-8 text-[#ff6b6b] mx-auto mb-3" />
                   <h3 className="font-semibold mb-2 text-white">Call Us</h3>
-                  <a 
-                    href="tel:+63495411635" 
+                  <a
+                    href="tel:+63495411635"
                     className="text-sm text-white hover:text-[#ff6b6b] hover:underline transition-colors"
                   >
-                   (049) 541 1635
+                    (0949) 541 1635
                   </a>
                   <p className="text-sm text-white mt-1">
                     Available daily
@@ -177,11 +177,11 @@ export default function Contact() {
                   <h4 className="font-semibold text-[#ff6b6b] mb-2">Table Reservations</h4>
                   <p className="text-sm text-white">
                     For parties of 6 or more, we recommend making a reservation. Call us at{" "}
-                    <a 
-                      href="tel:+63495411635" 
+                    <a
+                      href="tel:+63495411635"
                       className="text-[#ff6b6b] hover:text-white hover:underline transition-colors"
                     >
-                      (049) 541 1635
+                      (0949) 541 1635
                     </a>{" "}
                     or use our online booking system.
                   </p>
@@ -190,11 +190,11 @@ export default function Contact() {
                   <h4 className="font-semibold text-[#ff6b6b] mb-2">Private Events</h4>
                   <p className="text-sm text-white">
                     We cater private events and parties! Call us at{" "}
-                    <a 
-                      href="tel:+63495411635" 
+                    <a
+                      href="tel:+63495411635"
                       className="text-[#ff6b6b] hover:text-white hover:underline transition-colors"
                     >
-                      (049) 541 1635
+                      (0949) 541 1635
                     </a>{" "}
                     for custom menu options and pricing for your special occasion.
                   </p>
@@ -270,8 +270,8 @@ export default function Contact() {
                   <Label htmlFor="subject" className="text-white">
                     Subject
                   </Label>
-                  <Select 
-                    value={formData.subject} 
+                  <Select
+                    value={formData.subject}
                     onValueChange={(value) => handleInputChange("subject", value)}
                     disabled={isSubmitting}
                   >
@@ -355,15 +355,13 @@ export default function Contact() {
           </CardHeader>
           <CardContent>
             <div className="overflow-hidden rounded-lg border border-white/30">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3867.0673320137157!2d121.05791274726884!3d14.249294550117305!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33bd7d473064774b%3A0x1c5811e56d7d3d8e!2sIpponyari%20Santa%20Rosa!5e0!3m2!1sen!2sph!4v1764121153010!5m2!1sen!2sph"
-                width="1455"
-                height="550"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d7723.425901825317!2d121.04758521035545!3d14.558400682116561!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397c90031c24cbb%3A0xbb7819dc8f7f0c2f!2sIpponyari%20BGC!5e0!3m2!1sen!2sph!4v1769486096387!5m2!1sen!2sph" 
+            width="700" 
+            height="450" 
+            style={{ border: 0 }}
+            allowFullScreen
+            loading="lazy" 
+            referrerPolicy="no-referrer-when-downgrade"/>
             </div>
           </CardContent>
         </Card>
