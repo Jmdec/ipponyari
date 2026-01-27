@@ -123,13 +123,13 @@ const Header = () => {
   }
 
   const allNav = [
-    { name: "Home", href: "/" },
-    { name: "Menu", href: "/menu" },
-    { name: "Reservations", href: "/reservations"},
-    { name: "Blog", href: "/blog"},
-    { name: "Promos", href: "/promos" },
-    { name: "Testimonials", href: "/testimonials" },
-    { name: "Contact Us", href: "/contact" },
+    { name: "Home", href: "/", icon: Home },
+    { name: "Menu", href: "/menu", icon: ChefHat },
+    { name: "Reservations", href: "/reservations", icon: Calendar },
+    { name: "Blog", href: "/blog", icon: BookOpen },
+    { name: "Promos", href: "/promos", icon: Gift },
+    { name: "Testimonials", href: "/testimonials", icon: MessageSquare },
+    { name: "Contact Us", href: "/contact", icon: Phone },
   ]
 
   const isActivePage = (href: string) => {
@@ -237,13 +237,6 @@ const Header = () => {
                     <div className="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c] transition-colors cursor-pointer">
                       <Package className="h-4 w-4" />
                       <span className="text-sm font-medium">Orders</span>
-                    </div>
-                  </Link>
-
-                  <Link href="/events-history" onClick={() => setIsDropdownOpen(false)} className="block">
-                    <div className="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c] transition-colors cursor-pointer">
-                      <FolderClock className="h-4 w-4" />
-                      <span className="text-sm font-medium">Events</span>
                     </div>
                   </Link>
 

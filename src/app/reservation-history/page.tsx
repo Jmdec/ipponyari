@@ -196,15 +196,17 @@ const ReservationsHistory = () => {
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
         <div className="absolute top-0 left-0 w-96 h-96 bg-[#dc143c]/30 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#dc143c]/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#dc143c]/20 rounded-full blur-3xl animate-pulse delay-500"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-125 h-125 bg-[#dc143c]/20 rounded-full blur-3xl animate-pulse delay-500"></div>
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header */}
+        {/* Header */}`
         <div className="mb-8">
           <div className="text-center gap-4 mb-6">
             <div>
-              <h1 className="text-4xl md:text-5xl font-black text-white mb-2">Reservations</h1>
+              <h1 className="text-4xl md:text-5xl font-black text-white mb-2">
+                Your <span className="text-[#ff6b6b]">Reservation</span>
+              </h1>
               <p className="text-white/70 text-lg">Track your dining experience in one place</p>
             </div>
           </div>

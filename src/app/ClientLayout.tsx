@@ -41,7 +41,7 @@ export default function ClientLayout({
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
-          <FloatingSocialMedia />
+          {/* <FloatingSocialMedia /> */}
           <CustomerServiceChatbot />
           <Toaster />
           <SonnerToaster />
