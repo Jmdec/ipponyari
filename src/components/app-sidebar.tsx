@@ -1,4 +1,5 @@
 "use client"
+
 import {
   Home,
   Package,
@@ -12,6 +13,7 @@ import {
   Flame,
   TrendingUp,
   ChefHat,
+  Calendar,
 } from "lucide-react"
 
 import {
@@ -28,6 +30,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
+import Image from "next/image"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -38,40 +41,35 @@ const items = [
     title: "Dashboard",
     url: "/admin/dashboard",
     icon: Home,
-    color: "text-green-600",
-    bgColor: "hover:bg-gradient-to-r hover:from-green-50 hover:to-amber-50",
   },
   {
     title: "Products",
     icon: Package,
-    color: "text-green-700",
-    bgColor: "hover:bg-gradient-to-r hover:from-green-50 hover:to-amber-50",
-    items: [
-      {
-        title: "All Products",
-        url: "/admin/product",
-      },
-    ],
+    url: "/admin/product",
   },
   {
     title: "Orders",
     url: "/admin/order",
     icon: ShoppingCart,
-    color: "text-amber-600",
-    bgColor: "hover:bg-gradient-to-r hover:from-amber-50 hover:to-green-50",
   },
   {
-    title: "Users",
+    title: "Reservations",
+    url: "/admin/reservations",
+    icon: Calendar,
+  },
+  {
+    title: "Customers",
     url: "/admin/users",
     icon: Users,
-    color: "text-green-600",
-    bgColor: "hover:bg-gradient-to-r hover:from-green-50 hover:to-amber-50",
+  },
+  {
+    title: "Reports",
+    url: "/admin/reports",
+    icon: BarChart3,
   },
   {
     title: "Content Management",
     icon: Megaphone,
-    color: "text-amber-600",
-    bgColor: "hover:bg-gradient-to-r hover:from-amber-50 hover:to-green-50",
     items: [
       {
         title: "Announcements",
@@ -85,41 +83,22 @@ const items = [
         title: "Testimonials",
         url: "/admin/testimonials",
       },
-      {
-        title: "Events",
-        url: "/admin/events",
-      },
     ],
   },
   {
     title: "Restaurant",
     icon: ChefHat,
-    color: "text-green-700",
-    bgColor: "hover:bg-gradient-to-r hover:from-green-50 hover:to-amber-50",
     items: [
       {
         title: "Chefs",
         url: "/admin/chefs",
       },
-      {
-        title: "Reservations",
-        url: "/admin/reservations",
-      },
     ],
-  },
-  {
-    title: "Reports",
-    url: "/admin/reports",
-    icon: BarChart3,
-    color: "text-green-700",
-    bgColor: "hover:bg-gradient-to-r hover:from-green-50 hover:to-amber-50",
   },
   {
     title: "Settings",
     url: "/admin/settings",
     icon: Settings,
-    color: "text-amber-600",
-    bgColor: "hover:bg-gradient-to-r hover:from-amber-50 hover:to-green-50",
   },
 ]
 
@@ -134,17 +113,17 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar className="border-r border-green-100">
-      <SidebarContent className="bg-gradient-to-b from-green-50 via-amber-50 to-green-50">
+    <Sidebar className="border-r border-red-100">
+      <SidebarContent className="bg-gradient-to-b from-red-50 via-amber-50 to-red-50">
         <SidebarGroup>
-          <div className="px-4 py-6 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg mx-3 mt-3 mb-4 shadow-lg">
+          <div className="px-4 py-6 bg-gradient-to-r from-red-700 to-red-800 text-white rounded-lg mx-3 mt-3 mb-4 shadow-lg">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                <Flame className="w-6 h-6 text-white" />
+              <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                <Image src="/logoippon.png" alt="Ipponyari Logo" fill className="object-contain bg-white rounded-full" />
               </div>
               <div>
-                <SidebarGroupLabel className="text-white font-bold text-lg">Restaurant Admin</SidebarGroupLabel>
-                <p className="text-green-100 text-xs">Management Portal</p>
+                <h2 className="text-white font-semibold text-lg">Restaurant Admin</h2>
+                <p className="text-red-100 text-xs">Management Portal</p>
               </div>
             </div>
           </div>
@@ -157,9 +136,9 @@ export function AppSidebar() {
                     <Collapsible className="group/collapsible">
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton
-                          className={`${item.bgColor} transition-all duration-200 rounded-lg mx-1 group hover:shadow-sm`}
+                          className="transition-all duration-200 rounded-lg mx-1 group hover:shadow-sm"
                         >
-                          <item.icon className={`h-5 w-5 ${item.color} group-hover:scale-110 transition-transform`} />
+                          <item.icon className={`h-5 w-5 text-red-700 group-hover:scale-110 transition-transform`} />
                           <span className="font-medium">{item.title}</span>
                           <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180 text-gray-400" />
                         </SidebarMenuButton>
@@ -171,10 +150,10 @@ export function AppSidebar() {
                               <SidebarMenuSubButton
                                 asChild
                                 isActive={pathname === subItem.url}
-                                className="hover:bg-green-100 rounded-md transition-colors"
+                                className="hover:bg-red-100 rounded-md transition-colors"
                               >
                                 <Link href={subItem.url} className="flex items-center gap-2">
-                                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                                   {subItem.title}
                                 </Link>
                               </SidebarMenuSubButton>
@@ -187,16 +166,14 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={pathname === item.url}
-                      className={`${item.bgColor} transition-all duration-200 rounded-lg mx-1 group hover:shadow-sm ${
-                        pathname === item.url
-                          ? "bg-gradient-to-r from-green-100 to-amber-100 border-l-4 border-green-600"
-                          : ""
-                      }`}
+                      className={`transition-all duration-200 rounded-lg mx-1 group hover:shadow-sm ${pathname === item.url
+                        ? "bg-gradient-to-r from-red-100 to-red-200 border-l-4 border-red-800"
+                        : ""
+                        }`}
                     >
                       <Link href={item.url || "#"} className="flex items-center gap-3">
-                        <item.icon className={`h-5 w-5 ${item.color} group-hover:scale-110 transition-transform`} />
+                        <item.icon className={`h-5 w-5 text-red-700`} />
                         <span className="font-medium">{item.title}</span>
-                        {pathname === item.url && <TrendingUp className="ml-auto h-4 w-4 text-green-600" />}
                       </Link>
                     </SidebarMenuButton>
                   )}
@@ -207,10 +184,10 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-3 bg-gradient-to-r from-green-50 to-amber-50 border-t border-green-200">
+      <SidebarFooter className="p-3 bg-gradient-to-r from-red-50 to-red-100 border-t border-red-200">
         <Button
           variant="ghost"
-          className="w-full justify-start hover:bg-gradient-to-r hover:from-green-100 hover:to-amber-100 transition-all duration-200 rounded-lg group"
+          className="w-full justify-start hover:bg-gradient-to-r hover:from-red-100 hover:to-red-200 transition-all duration-200 rounded-lg group"
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4 mr-2 text-red-500 group-hover:scale-110 transition-transform" />

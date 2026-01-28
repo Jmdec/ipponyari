@@ -78,16 +78,16 @@ export default function ReservationsAdmin() {
       const response = await fetch("/api/reservations", {
         headers: getAuthHeaders()
       })
-      
+
       console.log("Response status:", response.status)
-      
+
       if (!response.ok) throw new Error("Failed to fetch")
-      
+
       const data = await response.json()
       console.log("Raw API Response:", data)
-      
+
       let reservationList = []
-      
+
       if (data.success && data.data && Array.isArray(data.data)) {
         reservationList = data.data
       } else if (Array.isArray(data)) {
@@ -95,12 +95,12 @@ export default function ReservationsAdmin() {
       } else if (data.data && Array.isArray(data.data)) {
         reservationList = data.data
       }
-      
+
       console.log("✅ Loaded reservations:", reservationList.length)
       if (reservationList.length > 0) {
         console.log("Sample reservation:", reservationList[0])
       }
-      
+
       setReservations(reservationList)
     } catch (error) {
       console.error("Error fetching reservations:", error)
@@ -117,33 +117,33 @@ export default function ReservationsAdmin() {
     const lastDay = new Date(year, month + 1, 0)
     const daysInMonth = lastDay.getDate()
     const startingDayOfWeek = firstDay.getDay()
-    
+
     const days = []
-    
+
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null)
     }
-    
+
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(new Date(year, month, day))
     }
-    
+
     return days
   }
 
   function getReservationsForDate(date: Date | null) {
     if (!date) return []
-    
+
     const year = date.getFullYear()
     const month = String(date.getMonth() + 1).padStart(2, '0')
     const day = String(date.getDate()).padStart(2, '0')
     const dateStr = `${year}-${month}-${day}`
-    
+
     const found = reservations.filter(res => {
       const resDate = res.date.substring(0, 10)
       return resDate === dateStr
     })
-    
+
     return found
   }
 
@@ -171,10 +171,10 @@ export default function ReservationsAdmin() {
 
   function formatDate(dateString: string) {
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     })
   }
 
@@ -260,254 +260,255 @@ export default function ReservationsAdmin() {
 
   return (
     <SidebarProvider defaultOpen={!isMobile}>
-      <AppSidebar />
-      <div className="flex-1">
-        <div className="flex items-center gap-2 p-4 border-b">
-          <SidebarTrigger />
-          <h1 className="text-lg font-semibold">Reservations Calendar</h1>
-        </div>
-        
-        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 md:mb-8">
-            <div className="flex items-center gap-2 sm:gap-4">
-              <h2 className="text-xl sm:text-2xl font-bold">{formatMonthYear(currentDate)}</h2>
-              <Button variant="outline" size="sm" onClick={goToToday}>
-                Today
-              </Button>
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Button variant="outline" size="icon" onClick={previousMonth}>
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <Button variant="outline" size="icon" onClick={nextMonth}>
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-              <Button onClick={() => setIsAddingReservation(true)} className="flex-1 sm:flex-none">
-                <Plus className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">New Reservation</span>
-                <span className="sm:hidden">New</span>
-              </Button>
-            </div>
+      <div className="flex min-h-screen w-full bg-gradient-to-br from-orange-50 to-red-50">
+        <AppSidebar />
+        <div className={`flex-1 min-w-0 ${isMobile ? "ml-0" : "ml-72"}`}>
+          <div className="flex items-center gap-2 p-4 border-b">
+            <SidebarTrigger />
+            <h1 className="text-lg font-semibold">Reservations Calendar</h1>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 sm:gap-2">
-            {weekDays.map(day => (
-              <div key={day} className="p-1 sm:p-2 text-center font-semibold text-xs sm:text-sm text-gray-600">
-                <span className="hidden sm:inline">{day}</span>
-                <span className="sm:hidden">{day.substring(0, 1)}</span>
-              </div>
-            ))}
-
-            {days.map((date, index) => {
-              const dayReservations = getReservationsForDate(date)
-              
-              return (
-                <Card
-                  key={index}
-                  className={`min-h-[80px] sm:min-h-[100px] lg:min-h-[120px] ${!date ? 'invisible' : ''} ${
-                    isToday(date) ? 'ring-2 ring-blue-500' : ''
-                  }`}
-                >
-                  <CardContent className="p-1 sm:p-2">
-                    {date && (
-                      <>
-                        <div className="text-xs sm:text-sm font-semibold mb-1 sm:mb-2 text-gray-700">
-                          {date.getDate()}
-                        </div>
-                        <div className="space-y-0.5 sm:space-y-1">
-                          {dayReservations.map(reservation => (
-                            <button
-                              key={reservation.id}
-                              onClick={() => setSelectedReservation(reservation)}
-                              className="w-full text-left px-1 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs truncate transition-colors bg-green-100 hover:bg-green-200 text-green-800 font-medium"
-                            >
-                              <span className="hidden sm:inline">{reservation.time.substring(0, 5)} - </span>
-                              {reservation.name}
-                            </button>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-
-          <Dialog open={!!selectedReservation} onOpenChange={() => setSelectedReservation(null)}>
-            <DialogContent className="max-w-[95vw] sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Reservation Details</DialogTitle>
-              </DialogHeader>
-              {selectedReservation && (
-                <div className="space-y-3 sm:space-y-4 max-h-[70vh] overflow-y-auto">
-                  <div>
-                    <label className="text-xs sm:text-sm font-semibold text-gray-600">Name</label>
-                    <p className="text-base sm:text-lg">{selectedReservation.name}</p>
-                  </div>
-                  
-                  <div>
-                    <label className="text-xs sm:text-sm font-semibold text-gray-600">Email</label>
-                    <p className="text-sm sm:text-base break-all">{selectedReservation.email}</p>
-                  </div>
-                  
-                  <div>
-                    <label className="text-xs sm:text-sm font-semibold text-gray-600">Phone</label>
-                    <p className="text-sm sm:text-base">{selectedReservation.phone}</p>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                    <div>
-                      <label className="text-xs sm:text-sm font-semibold text-gray-600">Date</label>
-                      <p className="text-sm sm:text-base">{formatDate(selectedReservation.date)}</p>
-                    </div>
-                    <div>
-                      <label className="text-xs sm:text-sm font-semibold text-gray-600">Time</label>
-                      <p className="text-sm sm:text-base">{formatTime(selectedReservation.time)}</p>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="text-xs sm:text-sm font-semibold text-gray-600">Guests</label>
-                    <p className="text-sm sm:text-base">{selectedReservation.guests} people</p>
-                  </div>
-                  
-                  {selectedReservation.special_requests && (
-                    <div>
-                      <label className="text-xs sm:text-sm font-semibold text-gray-600">Special Requests</label>
-                      <p className="text-xs sm:text-sm">{selectedReservation.special_requests}</p>
-                    </div>
-                  )}
-                  
-                  <div>
-                    <label className="text-xs sm:text-sm font-semibold text-gray-600 block mb-2">Status</label>
-                    <Select
-                      value={selectedReservation.status}
-                      onValueChange={(value: ReservationStatus) =>
-                        handleStatusChange(selectedReservation.id, value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="confirmed">Confirmed</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Payment Info */}
-                  <div className="border-t pt-3 mt-3">
-                    <label className="text-xs sm:text-sm font-semibold text-gray-600 block mb-1">Payment Info</label>
-                    <div className="space-y-1">
-                      <div>
-                        <span className="font-semibold">Status:</span>{" "}
-                        <span>{selectedReservation.reservation_fee_paid ? "Paid" : "Unpaid"}</span>
-                      </div>
-                      {selectedReservation.payment_method && (
-                        <div>
-                          <span className="font-semibold">Method:</span>{" "}
-                          <span>{selectedReservation.payment_method}</span>
-                        </div>
-                      )}
-                      {selectedReservation.payment_reference && (
-                        <div>
-                          <span className="font-semibold">Reference:</span>{" "}
-                          <span>{selectedReservation.payment_reference}</span>
-                        </div>
-                      )}
-                      {selectedReservation.payment_screenshot && (
-                        <div>
-                          <span className="font-semibold">Screenshot:</span>{" "}
-                          <a href={`/${selectedReservation.payment_screenshot}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View</a>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <Button
-                    variant="destructive"
-                    className="w-full"
-                    onClick={() => handleDelete(selectedReservation.id)}
-                  >
-                    Delete Reservation
-                  </Button>
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={isAddingReservation} onOpenChange={setIsAddingReservation}>
-            <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Create New Reservation</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3 sm:space-y-4">
-                <Input
-                  placeholder="Name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-                <Input
-                  type="email"
-                  placeholder="Email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-                <Input
-                  placeholder="Phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <Input
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  />
-                  <Input
-                    type="time"
-                    value={formData.time}
-                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                  />
-                </div>
-                <Input
-                  type="number"
-                  placeholder="Number of Guests"
-                  min="1"
-                  max="20"
-                  value={formData.guests}
-                  onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) })}
-                />
-                <Textarea
-                  placeholder="Special Requests (Optional)"
-                  value={formData.special_requests}
-                  onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
-                  rows={3}
-                />
-                <Select
-                  value={formData.status}
-                  onValueChange={(value: ReservationStatus) =>
-                    setFormData({ ...formData, status: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button onClick={handleCreateReservation} className="w-full">
-                  Create Reservation
+          <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 md:mb-8">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <h2 className="text-xl sm:text-2xl font-bold">{formatMonthYear(currentDate)}</h2>
+                <Button variant="outline" size="sm" onClick={goToToday}>
+                  Today
                 </Button>
               </div>
-            </DialogContent>
-          </Dialog>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <Button variant="outline" size="icon" onClick={previousMonth}>
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button variant="outline" size="icon" onClick={nextMonth}>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+                <Button onClick={() => setIsAddingReservation(true)} className="flex-1 sm:flex-none">
+                  <Plus className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">New Reservation</span>
+                  <span className="sm:hidden">New</span>
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1 sm:gap-2">
+              {weekDays.map(day => (
+                <div key={day} className="p-1 sm:p-2 text-center font-semibold text-xs sm:text-sm text-gray-600">
+                  <span className="hidden sm:inline">{day}</span>
+                  <span className="sm:hidden">{day.substring(0, 1)}</span>
+                </div>
+              ))}
+
+              {days.map((date, index) => {
+                const dayReservations = getReservationsForDate(date)
+
+                return (
+                  <Card
+                    key={index}
+                    className={`min-h-[80px] sm:min-h-[100px] lg:min-h-[120px] ${!date ? 'invisible' : ''} ${isToday(date) ? 'ring-2 ring-blue-500' : ''
+                      }`}
+                  >
+                    <CardContent className="p-1 sm:p-2">
+                      {date && (
+                        <>
+                          <div className="text-xs sm:text-sm font-semibold mb-1 sm:mb-2 text-gray-700">
+                            {date.getDate()}
+                          </div>
+                          <div className="space-y-0.5 sm:space-y-1">
+                            {dayReservations.map(reservation => (
+                              <button
+                                key={reservation.id}
+                                onClick={() => setSelectedReservation(reservation)}
+                                className="w-full text-left px-1 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs truncate transition-colors bg-green-100 hover:bg-green-200 text-green-800 font-medium"
+                              >
+                                <span className="hidden sm:inline">{reservation.time.substring(0, 5)} - </span>
+                                {reservation.name}
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+
+            <Dialog open={!!selectedReservation} onOpenChange={() => setSelectedReservation(null)}>
+              <DialogContent className="max-w-[95vw] sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Reservation Details</DialogTitle>
+                </DialogHeader>
+                {selectedReservation && (
+                  <div className="space-y-3 sm:space-y-4 max-h-[70vh] overflow-y-auto">
+                    <div>
+                      <label className="text-xs sm:text-sm font-semibold text-gray-600">Name</label>
+                      <p className="text-base sm:text-lg">{selectedReservation.name}</p>
+                    </div>
+
+                    <div>
+                      <label className="text-xs sm:text-sm font-semibold text-gray-600">Email</label>
+                      <p className="text-sm sm:text-base break-all">{selectedReservation.email}</p>
+                    </div>
+
+                    <div>
+                      <label className="text-xs sm:text-sm font-semibold text-gray-600">Phone</label>
+                      <p className="text-sm sm:text-base">{selectedReservation.phone}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <label className="text-xs sm:text-sm font-semibold text-gray-600">Date</label>
+                        <p className="text-sm sm:text-base">{formatDate(selectedReservation.date)}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs sm:text-sm font-semibold text-gray-600">Time</label>
+                        <p className="text-sm sm:text-base">{formatTime(selectedReservation.time)}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs sm:text-sm font-semibold text-gray-600">Guests</label>
+                      <p className="text-sm sm:text-base">{selectedReservation.guests} people</p>
+                    </div>
+
+                    {selectedReservation.special_requests && (
+                      <div>
+                        <label className="text-xs sm:text-sm font-semibold text-gray-600">Special Requests</label>
+                        <p className="text-xs sm:text-sm">{selectedReservation.special_requests}</p>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="text-xs sm:text-sm font-semibold text-gray-600 block mb-2">Status</label>
+                      <Select
+                        value={selectedReservation.status}
+                        onValueChange={(value: ReservationStatus) =>
+                          handleStatusChange(selectedReservation.id, value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="confirmed">Confirmed</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Payment Info */}
+                    <div className="border-t pt-3 mt-3">
+                      <label className="text-xs sm:text-sm font-semibold text-gray-600 block mb-1">Payment Info</label>
+                      <div className="space-y-1">
+                        <div>
+                          <span className="font-semibold">Status:</span>{" "}
+                          <span>{selectedReservation.reservation_fee_paid ? "Paid" : "Unpaid"}</span>
+                        </div>
+                        {selectedReservation.payment_method && (
+                          <div>
+                            <span className="font-semibold">Method:</span>{" "}
+                            <span>{selectedReservation.payment_method}</span>
+                          </div>
+                        )}
+                        {selectedReservation.payment_reference && (
+                          <div>
+                            <span className="font-semibold">Reference:</span>{" "}
+                            <span>{selectedReservation.payment_reference}</span>
+                          </div>
+                        )}
+                        {selectedReservation.payment_screenshot && (
+                          <div>
+                            <span className="font-semibold">Screenshot:</span>{" "}
+                            <a href={`/${selectedReservation.payment_screenshot}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View</a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <Button
+                      variant="destructive"
+                      className="w-full"
+                      onClick={() => handleDelete(selectedReservation.id)}
+                    >
+                      Delete Reservation
+                    </Button>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={isAddingReservation} onOpenChange={setIsAddingReservation}>
+              <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Create New Reservation</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3 sm:space-y-4">
+                  <Input
+                    placeholder="Name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  />
+                  <Input
+                    placeholder="Phone"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <Input
+                      type="date"
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    />
+                    <Input
+                      type="time"
+                      value={formData.time}
+                      onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                    />
+                  </div>
+                  <Input
+                    type="number"
+                    placeholder="Number of Guests"
+                    min="1"
+                    max="20"
+                    value={formData.guests}
+                    onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) })}
+                  />
+                  <Textarea
+                    placeholder="Special Requests (Optional)"
+                    value={formData.special_requests}
+                    onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
+                    rows={3}
+                  />
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value: ReservationStatus) =>
+                      setFormData({ ...formData, status: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="confirmed">Confirmed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={handleCreateReservation} className="w-full">
+                    Create Reservation
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </div>
     </SidebarProvider>

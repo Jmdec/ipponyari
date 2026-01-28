@@ -22,6 +22,7 @@ import {
   MessageSquare,
   FolderClock,
   Phone,
+  History
 } from "lucide-react"
 import Image from "next/image"
 import { useCartStore } from "@/store/cartStore"
@@ -188,7 +189,7 @@ const Header = () => {
             {user ? (
               <div className="relative group">
                 <div className="flex items-center space-x-2 cursor-pointer">
-                  <Link href="/cart" className="block">
+                  <Link href="/cart" className="hidden lg:block">
                     <Button
                       variant="outline"
                       size="sm"
@@ -203,19 +204,52 @@ const Header = () => {
                       )}
                     </Button>
                   </Link>
+                  <Link href="/track" className="hidden lg:block">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="relative border-[#dc143c]/30 text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c] hover:border-[#dc143c] transition-all duration-300 p-2 h-10 w-10 bg-transparent"
+                      title="Cart"
+                    >
+                      <History className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                  <Link href="/profile" className="hidden lg:block">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="relative border-[#dc143c]/30 text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c] hover:border-[#dc143c] transition-all duration-300 p-2 h-10 w-10 bg-transparent"
+                      title="Profile"
+                    >
+                      <User className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                  <div className="hidden lg:block">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        handleLogout();
+                        setIsDropdownOpen(false);
+                      }}
+                      className="relative bg-[#dc143c]/30 border-[#dc143c]/30 text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c] hover:border-[#dc143c] transition-all duration-300 p-2 h-10 w-10 bg-transparent"
+                    >
+                      <LogOut className="h-4 w-4" />
+                    </Button>
+                  </div>
 
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="relative bg-[#dc143c] border-[#dc143c] text-white hover:bg-[#b01030] transition-all duration-300 shadow-md p-2 h-10 w-10"
+                    className="relative bg-[#dc143c] border-[#dc143c] text-white hover:bg-[#b01030] transition-all duration-300 shadow-md p-2 h-10 w-10 block lg:hidden"
                   >
                     <User className="h-5 w-5" />
                   </Button>
                 </div>
 
                 <div
-                  className={`absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 transition-all duration-200 ${isDropdownOpen
+                  className={`block lg:hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 transition-all duration-200 ${isDropdownOpen
                     ? "opacity-100 visible"
                     : "opacity-0 invisible group-hover:opacity-100 group-hover:visible"
                     }`}
@@ -233,17 +267,17 @@ const Header = () => {
                     </div>
                   </Link>
 
-                  <Link href="/orders" onClick={() => setIsDropdownOpen(false)} className="block">
+                  <Link href="/cart" onClick={() => setIsDropdownOpen(false)} className="block">
                     <div className="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c] transition-colors cursor-pointer">
                       <Package className="h-4 w-4" />
-                      <span className="text-sm font-medium">Orders</span>
+                      <span className="text-sm font-medium">Cart</span>
                     </div>
                   </Link>
 
-                  <Link href="/reservation-history" onClick={() => setIsDropdownOpen(false)} className="block">
+                  <Link href="/track" onClick={() => setIsDropdownOpen(false)} className="block">
                     <div className="flex items-center space-x-3 px-4 py-2.5 text-gray-700 hover:bg-[#dc143c]/10 hover:text-[#dc143c] transition-colors cursor-pointer">
                       <Calendar className="h-4 w-4" />
-                      <span className="text-sm font-medium">Reservations</span>
+                      <span className="text-sm font-medium">Track</span>
                     </div>
                   </Link>
 

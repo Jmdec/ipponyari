@@ -84,7 +84,7 @@ export default function ReportsPage() {
                 <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-orange-100">
                   <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent flex items-center gap-2">
                     <BarChart3 className="w-6 h-6 text-orange-600" />
-                    보고서 Reports
+                    Reports
                   </h1>
                   <p className="text-sm sm:text-base text-gray-600 mt-1">View analytics and business insights</p>
                 </div>

@@ -55,6 +55,37 @@ export default function ReservationsPage() {
   const [dailyBookingsCount, setDailyBookingsCount] = useState(0)
   const [checkingBookings, setCheckingBookings] = useState(false)
 
+  const calculateReservationFee = (occasionType: string, guests: number) => {
+    let baseFee = 0;
+
+    switch (occasionType) {
+      case "Birthday":
+        baseFee = 500; // base fee for birthday
+        break;
+      case "Anniversary":
+        baseFee = 700; // base fee for anniversary
+        break;
+      case "Business Meeting":
+        baseFee = 1000; // base fee for business meetings
+        break;
+      case "Casual Dinner":
+        baseFee = 0; // no fee for casual dinner
+        break;
+      case "Other":
+        baseFee = 300; // generic fee
+        break;
+      default:
+        baseFee = 0;
+        break;
+    }
+
+    // Add extra charge per guest above 4
+    const extraGuests = guests > 4 ? guests - 4 : 0;
+    const extraFeePerGuest = 200;
+
+    return baseFee + extraGuests * extraFeePerGuest;
+  };
+
   useEffect(() => {
     const userData = localStorage.getItem("user_data")
     const token = localStorage.getItem("auth_token")
@@ -109,6 +140,7 @@ export default function ReservationsPage() {
   const handleChange = (e: { target: { name: string; value: string } }) => {
     const { name, value } = e.target
 
+    // Email validation
     if (name === "email") {
       setFormData((prev) => ({ ...prev, [name]: value }))
       if (!isValidEmail(value)) {
@@ -119,8 +151,8 @@ export default function ReservationsPage() {
       return
     }
 
+    // Phone validation
     if (name === "phone") {
-      // Remove all non-digit characters for counting
       const digitsOnly = value.replace(/\D/g, "")
       if (digitsOnly.length > 11) {
         setPhoneError("Phone number cannot exceed 11 digits")
@@ -133,6 +165,7 @@ export default function ReservationsPage() {
       return
     }
 
+    // Date validation
     if (name === "date") {
       setFormData((prev) => {
         const newData = { ...prev, [name]: value }
@@ -147,6 +180,19 @@ export default function ReservationsPage() {
       return
     }
 
+    // Handle occasion_type or guests change to update reservation fee
+    if (name === "occasion_type" || name === "guests") {
+      setFormData((prev) => {
+        const updated = { ...prev, [name]: value }
+        const guestsNum = Number(updated.guests) || 1
+        // Convert number to string to match formData type
+        updated.reservation_fee = calculateReservationFee(updated.occasion_type || "", guestsNum).toString()
+        return updated
+      })
+      return
+    }
+
+    // Default case for other fields
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
@@ -208,14 +254,11 @@ export default function ReservationsPage() {
         // Occasion Details
         return formData.occasion_type && formData.occasion_type !== ""
       case 4:
-        // Payment Details
         if (isDailyLimitReached()) return false
-        // Reservation fee must be a positive number (if required)
         if (formData.reservation_fee && (isNaN(Number(formData.reservation_fee)) || Number(formData.reservation_fee) < 0)) return false
-        // Payment method required
         if (!formData.payment_method) return false
-        // If payment_reference is required for the method, check it (optional: add logic if needed)
-        // If payment_receipt is required for the method, check it (optional: add logic if needed)
+        if (!formData.payment_reference) return false
+        if (!formData.payment_receipt) return false
         return true
       default:
         return false
@@ -223,95 +266,108 @@ export default function ReservationsPage() {
   }
 
   const handleSubmit = async () => {
-    if (isDailyLimitReached()) {
-      setMessage("You have reached the maximum of 2 reservations per day. Please choose a different date.")
+  if (isDailyLimitReached()) {
+    setMessage(
+      "You have reached the maximum of 2 reservations per day. Please choose a different date."
+    )
+    return
+  }
+
+  setLoading(true)
+  setMessage("")
+
+  try {
+    const token = localStorage.getItem("auth_token")
+    if (!token) {
+      window.location.href = "/login?redirect=/reservations"
       return
     }
 
-    setLoading(true)
-    setMessage("")
+    console.log("📝 Submitting reservation with data:", formData)
 
-    try {
-      const token = localStorage.getItem("auth_token")
+    // Prepare JSON payload (excluding file)
+    const payload: any = {
+      ...formData,
+      reservation_fee: Number(formData.reservation_fee) || 0,
+    }
+    delete payload.payment_receipt
 
-      if (!token) {
-        window.location.href = "/login?redirect=/reservations"
-        return
-      }
-
-      console.log("📝 Submitting reservation with data:", formData)
-
-      const headers: Record<string, string> = {
+    const response = await fetch("/api/reservations", {
+      method: "POST",
+      headers: {
         "Content-Type": "application/json",
-        Accept: "application/json",
         Authorization: `Bearer ${token}`,
-      }
+      },
+      body: JSON.stringify(payload),
+    })
 
-      const response = await fetch("/api/reservations", {
+    const responseText = await response.text()
+    let data
+    try {
+      data = JSON.parse(responseText)
+    } catch (e) {
+      console.error("Failed to parse response:", responseText)
+      setMessage("Server error: Invalid response format")
+      return
+    }
+
+    if (!response.ok) {
+      const errorMsg = data.message || data.error || "Failed to create reservation"
+      setMessage(errorMsg)
+      return
+    }
+
+    console.log("✅ Reservation created successfully")
+
+    // If you need to upload the file separately:
+    if (formData.payment_receipt) {
+      const fileForm = new FormData()
+      fileForm.append("receipt", formData.payment_receipt)
+
+      const fileResponse = await fetch(`/api/reservations/upload-receipt/${data.reservation_id}`, {
         method: "POST",
-        headers,
-        body: JSON.stringify(formData),
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: fileForm,
       })
 
-      console.log("📨 Response Status:", response.status)
-
-      const responseText = await response.text()
-      console.log("📨 Response Text:", responseText)
-
-      let data
-      try {
-        data = JSON.parse(responseText)
-      } catch (e) {
-        console.error("Failed to parse response:", responseText)
-        setMessage("Server error: Invalid response format")
-        return
+      if (!fileResponse.ok) {
+        console.warn("Receipt upload failed, please check backend handling")
       }
-
-      console.log("📨 Parsed Response:", data)
-
-      if (!response.ok) {
-        const errorMsg = data.message || data.error || "Failed to create reservation"
-        console.error("❌ Error:", errorMsg)
-        if (response.status === 400 && (errorMsg?.includes("maximum") || errorMsg?.includes("limit"))) {
-          setMessage(errorMsg)
-        } else {
-          setMessage(errorMsg)
-        }
-        return
-      }
-
-      console.log("✅ Reservation created successfully")
-      setMessage("success")
-
-      setTimeout(() => {
-        setStep(1)
-        setFormData({
-          name: user?.name || "",
-          email: user?.email || "",
-          phone: user?.phone || "",
-          date: "",
-          time: "",
-          guests: "2",
-          dining_preference: "Main Dining",
-          special_requests: "",
-          occasion_type: "",
-          occasion_instructions: "",
-          reservation_fee: "",
-          payment_method: "",
-          payment_reference: "",
-          payment_receipt: undefined,
-        })
-        setMessage("")
-        setDailyBookingsCount(0)
-        window.location.href = "/reservation-history"
-      }, 3000)
-    } catch (error) {
-      console.error("❌ Reservation error:", error)
-      setMessage(error instanceof Error ? error.message : "An error occurred")
-    } finally {
-      setLoading(false)
     }
+
+    // Trigger email confirmation
+    setMessage("success")
+
+    setTimeout(() => {
+      setStep(1)
+      setFormData({
+        name: user?.name || "",
+        email: user?.email || "",
+        phone: user?.phone || "",
+        date: "",
+        time: "",
+        guests: "2",
+        dining_preference: "Main Dining",
+        special_requests: "",
+        occasion_type: "",
+        occasion_instructions: "",
+        reservation_fee: "",
+        payment_method: "",
+        payment_reference: "",
+        payment_receipt: undefined,
+      })
+      setMessage("")
+      setDailyBookingsCount(0)
+    }, 3000)
+  } catch (error) {
+    console.error("❌ Reservation error:", error)
+    setMessage(error instanceof Error ? error.message : "An error occurred")
+  } finally {
+    setLoading(false)
   }
+}
 
   if (message === "success") {
     return (
@@ -390,7 +446,7 @@ export default function ReservationsPage() {
               <div
                 className="absolute top-5 left-5 h-1 bg-white rounded transition-all duration-500"
                 style={{
-                  width: `calc(${((step - 1) / 4) * 100}%)`, // step-1 because first step = 0 fill
+                  width: `calc(${((step - 1) / 4) * 100}%)`,
                 }}
               ></div>
 
@@ -481,18 +537,23 @@ export default function ReservationsPage() {
                       <label className="block text-sm font-semibold text-white mb-3">Number of Guests *</label>
                       <div className="relative">
                         <Users className="absolute left-4 top-3.5 w-5 h-5 text-[#ff6b6b] pointer-events-none" />
-                        <select
+                        <input
+                          type="number"
                           name="guests"
                           value={formData.guests}
-                          onChange={handleChange}
-                          className="w-full md:w-auto min-w-[120px] pl-12 pr-8 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white appearance-none"
-                        >
-                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                            <option key={num} value={num} className="bg-[#8B0000] text-white">
-                              {num} {num === 1 ? "Guest" : "Guests"}
-                            </option>
-                          ))}
-                        </select>
+                          min={1}
+                          max={50} // optional, adjust max as needed
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Allow only positive numbers
+                            if (/^\d*$/.test(value)) {
+                              setFormData((prev) => ({ ...prev, guests: value }));
+                            }
+                          }}
+                          placeholder="Number of Guests"
+                          required
+                          className="w-full md:w-auto min-w-[120px] pl-12 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white placeholder-white/40"
+                        />
                       </div>
                     </div>
 
@@ -689,8 +750,7 @@ export default function ReservationsPage() {
                       type="number"
                       name="reservation_fee"
                       value={formData.reservation_fee || ""}
-                      onChange={handleChange}
-                      placeholder="Enter amount (if required)"
+                      readOnly
                       className="w-full pl-4 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white placeholder-white/40"
                     />
                   </div>
@@ -704,19 +764,13 @@ export default function ReservationsPage() {
                       required
                       className="w-full pl-4 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg appearance-none text-white"
                     >
-                      {[
-                        "Credit Card",
-                        "PayPal",
-                        "GCash",
-                        "Security Bank",
-                        "Other",
-                      ].map((option) => (
-                        <option key={option} value={option} className="bg-red-200 max-w-md text-gray-900">
+                      {["Credit Card", "PayPal", "GCash", "Security Bank", "Other"].map((option) => (
+                        <option key={option} value={option} className="bg-red-200 text-gray-900">
                           {option}
                         </option>
                       ))}
                     </select>
-                  </div>
+                  </div>   
 
                   <div className="relative">
                     <label className="block text-sm font-semibold text-white mb-3">Reference Number *</label>
@@ -823,7 +877,6 @@ export default function ReservationsPage() {
                 </div>
               </div>
             )}
-
 
             {/* Navigation Buttons */}
             <div className="flex gap-4 mt-8">

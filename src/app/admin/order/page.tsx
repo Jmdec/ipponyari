@@ -727,12 +727,11 @@ export default function OrdersAdminPage() {
               <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-orange-100">
                   <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                    주문 관리 Orders
+                    Order Management
                   </h1>
                   <p className="text-sm sm:text-base text-gray-600 mt-1">
                     Manage customer orders and track delivery status
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">Showing all orders from all customers (Admin View)</p>
                 </div>
                 <div className="flex items-center gap-4 bg-white/70 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-orange-100">
                   <div className="flex items-center gap-2 text-sm">

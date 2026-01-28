@@ -158,195 +158,197 @@ export default function BlogPostsAdmin() {
 
   return (
     <SidebarProvider defaultOpen={!isMobile}>
-      <AppSidebar />
-      <div className="flex-1 flex flex-col">
-        <div className="flex items-center gap-2 p-4 border-b bg-background">
-          <SidebarTrigger />
-          <h1 className="text-lg font-semibold">Blog Posts</h1>
-        </div>
+      <div className="flex min-h-screen w-full bg-gradient-to-br from-orange-50 to-red-50">
+        <AppSidebar />
+        <div className={`flex-1 min-w-0 ${isMobile ? "ml-0" : "ml-72"}`}>
+          <div className="flex items-center gap-2 p-4 border-b bg-background">
+            <SidebarTrigger />
+            <h1 className="text-lg font-semibold">Blog Posts</h1>
+          </div>
 
-        <div className="flex-1 overflow-auto">
-          <div className="p-6 md:p-8 max-w-5xl mx-auto">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold text-foreground">Blog Posts</h1>
-                <p className="text-muted-foreground mt-1">Manage and create your blog content</p>
+          <div className="flex-1 overflow-auto">
+            <div className="p-6 md:p-8 max-w-5xl mx-auto">
+              {/* Header */}
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-bold text-foreground">Blog Posts</h1>
+                  <p className="text-muted-foreground mt-1">Manage and create your blog content</p>
+                </div>
+                <Button
+                  onClick={() => {
+                    setIsAdding(!isAdding)
+                    if (isAdding) {
+                      setFormData({ title: "", excerpt: "", content: "", author: "", image: null })
+                      setEditingId(null)
+                    }
+                  }}
+                  size="lg"
+                  className="w-full md:w-auto"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  {isAdding ? "Cancel" : "New Post"}
+                </Button>
               </div>
-              <Button
-                onClick={() => {
-                  setIsAdding(!isAdding)
-                  if (isAdding) {
-                    setFormData({ title: "", excerpt: "", content: "", author: "", image: null })
-                    setEditingId(null)
-                  }
-                }}
-                size="lg"
-                className="w-full md:w-auto"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                {isAdding ? "Cancel" : "New Post"}
-              </Button>
-            </div>
 
-            {/* Form */}
-            {isAdding && (
-              <Card className="mb-8 border-2">
-                <CardHeader className="border-b bg-muted/50">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-2xl">{editingId ? "Edit Post" : "Create New Post"}</CardTitle>
-                    <button
-                      onClick={() => {
-                        setIsAdding(false)
-                        setFormData({ title: "", excerpt: "", content: "", author: "", image: null })
-                        setEditingId(null)
-                      }}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground">Title</label>
-                        <Input
-                          placeholder="Enter post title"
-                          value={formData.title}
-                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                          required
-                          className="h-10"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground">Author</label>
-                        <Input
-                          placeholder="Enter author name"
-                          value={formData.author}
-                          onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                          required
-                          className="h-10"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Excerpt</label>
-                      <Textarea
-                        placeholder="Short summary of your post (appears in previews)"
-                        value={formData.excerpt}
-                        onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                        required
-                        rows={3}
-                        className="resize-none"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Content</label>
-                      <Textarea
-                        placeholder="Full blog post content"
-                        value={formData.content}
-                        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                        required
-                        rows={8}
-                        className="resize-none font-mono text-sm"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Featured Image</label>
-                      <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center hover:border-muted-foreground/50 transition-colors cursor-pointer">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              image: e.target.files?.[0] || null,
-                            })
-                          }
-                          className="hidden"
-                          id="image-upload"
-                        />
-                        <label htmlFor="image-upload" className="cursor-pointer block">
-                          <p className="text-sm font-medium text-foreground">
-                            {formData.image ? formData.image.name : "Click to upload or drag and drop"}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF up to 10MB</p>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-4">
-                      <Button type="submit" size="lg" className="flex-1">
-                        {editingId ? "Update Post" : "Create Post"}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="lg"
+              {/* Form */}
+              {isAdding && (
+                <Card className="mb-8 border-2">
+                  <CardHeader className="border-b bg-muted/50">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-2xl">{editingId ? "Edit Post" : "Create New Post"}</CardTitle>
+                      <button
                         onClick={() => {
                           setIsAdding(false)
                           setFormData({ title: "", excerpt: "", content: "", author: "", image: null })
                           setEditingId(null)
                         }}
+                        className="text-muted-foreground hover:text-foreground"
                       >
-                        Cancel
-                      </Button>
+                        <X className="w-5 h-5" />
+                      </button>
                     </div>
-                  </form>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Posts List */}
-            <div className="space-y-4">
-              {posts.length === 0 ? (
-                <Card className="border-dashed">
-                  <CardContent className="pt-12 pb-12 text-center">
-                    <p className="text-muted-foreground mb-4">No blog posts yet</p>
-                    <Button onClick={() => setIsAdding(true)}>Create your first post</Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                posts.map((post) => (
-                  <Card key={post.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="pt-6">
-                      <div className="flex flex-col md:flex-row gap-6">
-                       {post.image_url && (
-                          <img
-                            src={`${process.env.NEXT_PUBLIC_API_URL}${post.image_url}`}
-                            alt={post.title}
-                            className="w-full md:w-32 h-32 object-cover rounded-lg flex-shrink-0"
-                            onError={(e) => {
-                              e.currentTarget.src = "/placeholder.svg"
-                            }}
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-foreground">Title</label>
+                          <Input
+                            placeholder="Enter post title"
+                            value={formData.title}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            required
+                            className="h-10"
                           />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-lg text-foreground line-clamp-2">{post.title}</h3>
-                          <p className="text-sm text-muted-foreground mb-2">By {post.author}</p>
-                          <p className="text-sm text-foreground line-clamp-2 mb-3">{post.excerpt}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(post.created_at).toLocaleDateString()}
-                          </p>
                         </div>
-                        <div className="flex gap-2 flex-shrink-0">
-                          <Button variant="outline" size="sm" onClick={() => handleEdit(post)}>
-                            <Edit2 className="w-4 h-4" />
-                          </Button>
-                          <Button variant="destructive" size="sm" onClick={() => handleDelete(post.id)}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-foreground">Author</label>
+                          <Input
+                            placeholder="Enter author name"
+                            value={formData.author}
+                            onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                            required
+                            className="h-10"
+                          />
                         </div>
                       </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">Excerpt</label>
+                        <Textarea
+                          placeholder="Short summary of your post (appears in previews)"
+                          value={formData.excerpt}
+                          onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                          required
+                          rows={3}
+                          className="resize-none"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">Content</label>
+                        <Textarea
+                          placeholder="Full blog post content"
+                          value={formData.content}
+                          onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                          required
+                          rows={8}
+                          className="resize-none font-mono text-sm"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-foreground">Featured Image</label>
+                        <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center hover:border-muted-foreground/50 transition-colors cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                image: e.target.files?.[0] || null,
+                              })
+                            }
+                            className="hidden"
+                            id="image-upload"
+                          />
+                          <label htmlFor="image-upload" className="cursor-pointer block">
+                            <p className="text-sm font-medium text-foreground">
+                              {formData.image ? formData.image.name : "Click to upload or drag and drop"}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF up to 10MB</p>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3 pt-4">
+                        <Button type="submit" size="lg" className="flex-1">
+                          {editingId ? "Update Post" : "Create Post"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="lg"
+                          onClick={() => {
+                            setIsAdding(false)
+                            setFormData({ title: "", excerpt: "", content: "", author: "", image: null })
+                            setEditingId(null)
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Posts List */}
+              <div className="space-y-4">
+                {posts.length === 0 ? (
+                  <Card className="border-dashed">
+                    <CardContent className="pt-12 pb-12 text-center">
+                      <p className="text-muted-foreground mb-4">No blog posts yet</p>
+                      <Button onClick={() => setIsAdding(true)}>Create your first post</Button>
                     </CardContent>
                   </Card>
-                ))
-              )}
+                ) : (
+                  posts.map((post) => (
+                    <Card key={post.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="pt-6">
+                        <div className="flex flex-col md:flex-row gap-6">
+                          {post.image_url && (
+                            <img
+                              src={`${process.env.NEXT_PUBLIC_API_URL}${post.image_url}`}
+                              alt={post.title}
+                              className="w-full md:w-32 h-32 object-cover rounded-lg flex-shrink-0"
+                              onError={(e) => {
+                                e.currentTarget.src = "/placeholder.svg"
+                              }}
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-lg text-foreground line-clamp-2">{post.title}</h3>
+                            <p className="text-sm text-muted-foreground mb-2">By {post.author}</p>
+                            <p className="text-sm text-foreground line-clamp-2 mb-3">{post.excerpt}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(post.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="flex gap-2 flex-shrink-0">
+                            <Button variant="outline" size="sm" onClick={() => handleEdit(post)}>
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                            <Button variant="destructive" size="sm" onClick={() => handleDelete(post.id)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>
