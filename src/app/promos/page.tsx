@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Megaphone, Calendar, Sparkles } from "lucide-react"
+import { Megaphone, Calendar, Sparkles, TicketPercent } from "lucide-react"
 
 interface Announcement {
   id: number
@@ -71,14 +71,16 @@ export default function PromosPage() {
         {/* Header */}
         <div className="text-center mb-16 animate-in fade-in slide-in-from-top duration-700">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-6 py-3 rounded-full border border-white/20 mb-6">
-            <Sparkles className="w-5 h-5 text-[#ff6b6b] animate-pulse" />
-            <span className="text-white font-semibold text-sm uppercase tracking-wider">Special Offers</span>
+            <TicketPercent className="w-5 h-5 text-[#f38686] animate-pulse" />
+            <span className="text-[#f38686] font-medium text-xs uppercase tracking-widest">Limited Time Offers</span>
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-bold mb-4 text-white drop-shadow-2xl">
-            Promotions & <span className="text-[#ff6b6b]">Announcements</span>
+          <h1 className="text-5xl md:text-6xl font-bold mb-4 text-white drop-shadow-2xl uppercase">
+            Offers & <span className="text-[#ff6b6b]">Highlights</span>
           </h1>
-          <p className="text-xl text-white/80">Check out our latest deals and special offers</p>
+          <p className="text-lg text-white/80 max-w-2xl mx-auto">
+            Discover seasonal promotions, limited-time offers, and special announcements
+          </p>
         </div>
 
         {/* Loading State */}

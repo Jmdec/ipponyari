@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Star, Quote, ChevronLeft, ChevronRight, X } from "lucide-react"
+import { Star, Quote, X } from "lucide-react"
 
 interface Testimonial {
   id: number
@@ -18,37 +18,23 @@ interface Testimonial {
 export default function TestimonialsSection() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
   const [loading, setLoading] = useState(true)
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [selectedTestimonial, setSelectedTestimonial] = useState<Testimonial | null>(null)
-  const [visibleCount, setVisibleCount] = useState(1)
+  const [selectedTestimonial, setSelectedTestimonial] =
+    useState<Testimonial | null>(null)
   const [isHovered, setIsHovered] = useState(false)
 
-  // Determine how many cards to show based on screen size
-  const getVisibleCount = () => {
-    if (typeof window === "undefined") return 1
-    if (window.innerWidth >= 1024) return 3 // desktop
-    if (window.innerWidth >= 768) return 2  // tablet
-    return 1                               // mobile
-  }
+  const trackRef = useRef<HTMLDivElement>(null)
+  const position = useRef(0)
+  const speed = 0.35 // 🔥 adjust speed here
 
-  useEffect(() => {
-    const handleResize = () => setVisibleCount(getVisibleCount())
-    handleResize()
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
-
-  // Fetch testimonials
+  /* Fetch testimonials */
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
         const response = await fetch("/api/testimonials?status=approved")
-        if (!response.ok) throw new Error("Failed to fetch testimonials")
         const data = await response.json()
-        const approvedTestimonials = data.filter((t: Testimonial) => t.status === "approved")
-        setTestimonials(approvedTestimonials)
+        setTestimonials(data.filter((t: Testimonial) => t.status === "approved"))
       } catch (err) {
-        console.error("Error fetching testimonials:", err)
+        console.error(err)
       } finally {
         setLoading(false)
       }
@@ -56,61 +42,38 @@ export default function TestimonialsSection() {
     fetchTestimonials()
   }, [])
 
-  // Auto-scroll testimonials
+  /* Continuous animation */
   useEffect(() => {
-    if (testimonials.length <= visibleCount) return
-    if (isHovered) return
+    if (!trackRef.current || testimonials.length === 0) return
 
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + visibleCount) % testimonials.length)
-    }, 1000)
+    const track = trackRef.current
+    let rafId: number
 
-    return () => clearInterval(interval)
-  }, [testimonials, visibleCount, isHovered])
+    const animate = () => {
+      if (!isHovered) {
+        position.current -= speed
+        const resetPoint = track.scrollWidth / 2
 
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + visibleCount) % testimonials.length)
-  }
+        if (Math.abs(position.current) >= resetPoint) {
+          position.current = 0
+        }
 
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev - visibleCount + testimonials.length) % testimonials.length)
-  }
+        track.style.transform = `translateX(${position.current}px)`
+      }
+      rafId = requestAnimationFrame(animate)
+    }
 
-  if (loading) {
-    return (
-      <section className="py-20 bg-gradient-to-br from-amber-50 via-orange-50 to-stone-100">
-        <div className="container mx-auto px-4 text-center">
-          <div className="text-center mb-16">
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <div className="w-12 h-px bg-[#c41e3a]" />
-              <span className="text-xs lg:text-sm font-medium text-[#c41e3a] tracking-[0.2em] uppercase">
-                Trusted Impressions
-              </span>
-              <div className="w-12 h-px bg-[#c41e3a]" />
-            </div>
-            <h2 className="text-4xl lg:text-5xl font-bold leading-tight mb-5">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-700 to-red-600">
-                What Our Guests Say
-              </span>
-            </h2>
-            <p className="text-md lg:text-lg text-gray-600 leading-relaxed">
-              Real experiences from our valued customers
-            </p>
-          </div>
-          <div className="flex justify-center gap-2 mt-6">
-            <div className="w-2 h-2 bg-[#ff6b6b] rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-[#ff6b6b] rounded-full animate-bounce delay-100"></div>
-            <div className="w-2 h-2 bg-[#ff6b6b] rounded-full animate-bounce delay-200"></div>
-          </div>
-          <p className="text-lg text-gray-600">Loading testimonials...</p>
-        </div>
-      </section>
-    )
-  }
+    rafId = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(rafId)
+  }, [testimonials, isHovered])
+
+  const duplicatedTestimonials = [...testimonials, ...testimonials]
+
+  if (loading) return null
 
   return (
     <>
-      <section className="py-20 bg-gradient-to-br from-amber-50 via-orange-50 to-stone-100 border-b-2 border-red-100 shadow-sm">
+      <section className="py-20 bg-gradient-to-br from-amber-50 via-orange-50 to-stone-100 border-b-2 border-red-100">
         <div className="container mx-auto px-4">
           {/* Header */}
           <div className="text-center mb-16">
@@ -121,87 +84,73 @@ export default function TestimonialsSection() {
               </span>
               <div className="w-12 h-px bg-[#c41e3a]" />
             </div>
-            <h2 className="text-4xl lg:text-5xl font-bold leading-tight mb-5">
+
+            <h2 className="text-4xl lg:text-5xl font-bold mb-5">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-700 to-red-600">
                 What Our Guests Say
               </span>
             </h2>
-            <p className="text-md lg:text-lg text-gray-600 leading-relaxed">
+
+            <p className="text-gray-600 text-lg">
               Real experiences from our valued customers
             </p>
           </div>
 
-          {/* Testimonials Carousel */}
-          {testimonials.length > 0 ? (
+          {/* Continuous Carousel */}
+          <div
+            className="relative overflow-hidden max-w-7xl mx-auto shadow-lg rounded-xl"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
             <div
-              className="max-w-6xl mx-auto flex items-center gap-4"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
+              ref={trackRef}
+              className="flex gap-6 will-change-transform"
             >
-              {/* Previous Button */}
-              {testimonials.length > visibleCount && (
-                <button
-                  onClick={prevSlide}
-                  className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white rounded-full p-3 md:p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 relative z-50"
-                  aria-label="Previous testimonial"
+              {duplicatedTestimonials.map((testimonial, index) => (
+                <Card
+                  key={`${testimonial.id}-${index}`}
+                  onClick={() => setSelectedTestimonial(testimonial)}
+                  className="min-w-[300px] md:min-w-[360px] lg:min-w-[380px]
+                             bg-white border-2 border-red-200 cursor-pointer
+                             transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
                 >
-                  <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
-                </button>
-              )}
+                  <CardContent className="p-6 space-y-4">
+                    <Quote className="w-8 h-8 text-red-400" />
 
-              {/* Cards */}
-              <div className={`grid gap-6 flex-1 grid-cols-1 md:grid-cols-2 lg:grid-cols-3`}>
-                {testimonials
-                  .slice(currentIndex, currentIndex + visibleCount)
-                  .map((testimonial) => (
-                    <Card
-                      key={testimonial.id}
-                      onClick={() => setSelectedTestimonial(testimonial)}
-                      className="group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-red-200 bg-white cursor-pointer"
-                    >
-                      <CardContent className="p-6 space-y-4">
-                        <Quote className="w-8 h-8 text-red-400" />
-                        <div className="flex gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${i < testimonial.rating ? "text-red-600 fill-red-600" : "text-gray-300"}`}
-                            />
-                          ))}
-                        </div>
-                        <p className="text-gray-700 italic line-clamp-3">
-                          &apos;{testimonial.message}&apos;
-                        </p>
-                        <p className="text-red-600 font-semibold group-hover:text-red-700">
-                          Read more →
-                        </p>
-                        <div className="pt-4 border-t border-red-100">
-                          <p className="font-semibold text-gray-900">{testimonial.client_name}</p>
-                          <p className="text-xs text-gray-500">
-                            {new Date(testimonial.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-              </div>
+                    <div className="flex gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${
+                            i < testimonial.rating
+                              ? "text-red-600 fill-red-600"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
 
-              {/* Next Button */}
-              {testimonials.length > visibleCount && (
-                <button
-                  onClick={nextSlide}
-                  className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white rounded-full p-3 md:p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 relative z-50"
-                  aria-label="Next testimonial"
-                >
-                  <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
-                </button>
-              )}
+                    <p className="italic text-gray-700 line-clamp-3">
+                      &apos;{testimonial.message}&apos;
+                    </p>
+
+                    <p className="text-red-600 font-semibold">
+                      Read more →
+                    </p>
+
+                    <div className="pt-4 border-t border-red-100">
+                      <p className="font-semibold text-gray-900">
+                        {testimonial.client_name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(testimonial.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-600">No testimonials yet. Be the first to share your experience!</p>
-            </div>
-          )}
+          </div>
         </div>
       </section>
 
@@ -212,23 +161,25 @@ export default function TestimonialsSection() {
           onClick={() => setSelectedTestimonial(null)}
         >
           <div
-            className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative border-2 border-red-200"
+            className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border-2 border-red-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-gradient-to-r from-red-700 to-red-600 text-white p-6 rounded-t-2xl">
-              <div className="flex items-start justify-between">
+            <div className="bg-gradient-to-r from-red-700 to-red-600 text-white p-6 rounded-t-2xl">
+              <div className="flex justify-between">
                 <div>
-                  <h3 className="text-2xl font-bold">{selectedTestimonial.client_name}</h3>
-                  <p className="text-red-100 text-sm mt-1">
+                  <h3 className="text-2xl font-bold">
+                    {selectedTestimonial.client_name}
+                  </h3>
+                  <p className="text-sm text-red-100">
                     {new Date(selectedTestimonial.created_at).toLocaleDateString()}
                   </p>
                 </div>
+
                 <button
                   onClick={() => setSelectedTestimonial(null)}
-                  className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all"
-                  aria-label="Close modal"
+                  className="hover:bg-white/20 rounded-full p-2"
                 >
-                  <X className="w-6 h-6" />
+                  <X />
                 </button>
               </div>
 
@@ -236,15 +187,19 @@ export default function TestimonialsSection() {
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className={`w-6 h-6 ${i < selectedTestimonial.rating ? "text-amber-300 fill-amber-300" : "text-white text-opacity-30"}`}
+                    className={`w-5 h-5 ${
+                      i < selectedTestimonial.rating
+                        ? "text-amber-300 fill-amber-300"
+                        : "text-white/30"
+                    }`}
                   />
                 ))}
               </div>
             </div>
 
-            <div className="p-6 space-y-4">
-              <Quote className="w-12 h-12 text-red-400" />
-              <p className="text-gray-700 text-lg leading-relaxed italic">
+            <div className="p-6">
+              <Quote className="w-10 h-10 text-red-400 mb-4" />
+              <p className="italic text-gray-700 text-lg">
                 &apos;{selectedTestimonial.message}&apos;
               </p>
             </div>

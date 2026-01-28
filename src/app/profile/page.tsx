@@ -226,7 +226,7 @@ export default function ProfilePage() {
     if (!user?.token) return
 
     setIsLoadingAddress(true)
-    
+
     try {
       const response = await fetch("/api/addresses", {
         headers: {
@@ -257,7 +257,7 @@ export default function ProfilePage() {
         country: currentAddress.country,
       }
       setEditingData(formData)
-      
+
       setTimeout(() => {
         setIsModalOpen(true)
         setIsLoadingAddress(false)
@@ -295,22 +295,20 @@ export default function ProfilePage() {
       <div className="container mx-auto px-4 max-w-5xl relative z-10">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white text-center mb-2">Account Settings</h1>
+          <h1 className="text-5xl font-bold text-white text-center mb-2">Account Settings</h1>
           <p className="text-white/70 text-center">Manage your personal information and delivery addresses</p>
         </div>
 
         {/* User Profile Card */}
-        <Card className="mb-8 overflow-hidden border-white/30 shadow-2xl bg-[#4B0000]/70 backdrop-blur-sm">
+        <Card className="mb-8 overflow-hidden border-white/30 shadow-2xl bg-gradient-to-r from-[#6B0000] to-[#4B0000]/70 backdrop-blur-sm">
           {/* Header */}
-          <div className="bg-gradient-to-r from-[#8B0000] to-[#6B0000] p-8 text-white">
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <User className="h-8 w-8 text-white" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold">{user.name}</h2>
-                <p className="text-white/70">Valued Customer</p>
-              </div>
+          <div className="flex items-center gap-4 px-5">
+            <div className="h-16 w-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <User className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white">{user.name}</h2>
+              <p className="text-white/70">Valued Customer</p>
             </div>
           </div>
 
@@ -376,11 +374,10 @@ export default function ProfilePage() {
               {addresses.map((address, index) => (
                 <Card
                   key={address.id}
-                  className={`overflow-hidden transition-all ${
-                    address.is_default
+                  className={`overflow-hidden transition-all ${address.is_default
                       ? "ring-2 ring-[#ff6b6b] shadow-2xl bg-[#4B0000]/90 backdrop-blur-sm border-white/50"
                       : "border-white/30 shadow-xl hover:shadow-2xl bg-[#4B0000]/70 backdrop-blur-sm"
-                  }`}
+                    }`}
                 >
                   {/* Address Content */}
                   <div className="p-4">

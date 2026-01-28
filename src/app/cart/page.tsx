@@ -80,7 +80,7 @@ const Cart = () => {
                 </div>
                 <h1 className="text-3xl font-bold mb-4 text-white text-balance">Your Cart is Empty</h1>
                 <p className="text-xl text-white/70 mb-8 text-pretty">
-                  Looks like you haven't added any delicious Japanese dishes yet!
+                  Looks like you haven&apos;t added any delicious Japanese dishes yet!
                 </p>
                 <Button
                   asChild
@@ -113,7 +113,7 @@ const Cart = () => {
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
                   <h1 className="text-3xl font-bold text-white text-balance">
-                    Your Cart ({items.length} {items.length === 1 ? "item" : "items"})
+                    Your Cart ({items.map((item) => item.quantity).reduce((a, b) => a + b, 0)} {items.length === 1 ? "item" : "items"})
                   </h1>
                 </div>
                 <Button

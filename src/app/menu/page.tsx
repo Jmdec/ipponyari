@@ -161,7 +161,7 @@ export default function MenuPage() {
       )}
       {/* Install App Popup */}
       {showInstallPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-10 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
           <div className="relative bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden animate-in zoom-in duration-300">
             <button
               onClick={handleDismissPopup}
@@ -206,18 +206,18 @@ export default function MenuPage() {
         <div className="text-center mb-12 animate-in fade-in slide-in-from-top duration-700">
           <div className="inline-block mb-4">
             <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm px-6 py-3 rounded-full border border-white/10">
-              <ChefHat className="h-5 w-5 text-[#ff6b6b] animate-pulse" />
-              <span className="text-[#ff6b6b] font-medium text-xs uppercase tracking-widest">Authentic Japanese Cuisine</span>
+              <ChefHat className="h-5 w-5 text-[#f38686] animate-pulse" />
+              <span className="text-[#f38686] font-medium text-xs uppercase tracking-widest">Crafted with Tradition</span>
             </div>
           </div>
           <h1 className="text-5xl md:text-7xl font-bold text-white mb-2 drop-shadow-2xl animate-in zoom-in duration-500">
-            Your Table Awaits
+            Explore Our Menu
           </h1>
           <h2 className="text-4xl md:text-6xl font-bold text-[#ff6b6b] mb-6 drop-shadow-xl">
-            Ipponyari Menu
+            Ipponyari Selection
           </h2>
           <p className="text-white/80 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
-            Reserve your seat today and savor the finest Japanese dishes, prepared fresh daily by our master chefs
+            Carefully curated dishes inspired by Japan&apos;s rich culinary heritage, served fresh every day
           </p>
           {/* Decorative elements */}
           <div className="flex justify-center gap-2 mt-6">

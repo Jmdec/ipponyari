@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
-import { Star, Send, Sparkles, CheckCircle, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
+import { Star, Send, Sparkles, CheckCircle, ArrowRight, ChevronLeft, ChevronRight, ChefHat, UserCheck } from "lucide-react"
 
 interface Testimonial {
   id: number
@@ -125,7 +125,7 @@ export default function TestimonialsPage() {
           </div>
           <h2 className="text-4xl font-black text-white mb-2 drop-shadow-lg">Thank You!</h2>
           <p className="text-xl text-white/90 mb-1">Your testimonial has been received</p>
-          <p className="text-white/70">We appreciate your kind words and can't wait to see you again!</p>
+          <p className="text-white/70">We appreciate your kind words and can&apos;t wait to see you again!</p>
         </div>
       </div>
     )
@@ -143,13 +143,16 @@ export default function TestimonialsPage() {
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
         <div className="text-center mb-20 animate-in fade-in slide-in-from-top duration-700">
-          <div className="mb-4 flex justify-center">
-            <div className="bg-[#ff6b6b]/20 backdrop-blur-sm px-4 py-2 rounded-full border border-[#ff6b6b]/30">
-              <span className="text-white text-sm font-semibold">⭐ LOVED BY GUESTS</span>
+          <div className="inline-block mb-4">
+            <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm px-6 py-3 rounded-full border border-white/10">
+              <UserCheck className="h-5 w-5 text-[#ff6b6b] animate-pulse" />
+              <span className="text-[#ff6b6b] font-medium text-xs uppercase tracking-widest">Real Guest Experiences</span>
             </div>
           </div>
-          <h1 className="text-6xl md:text-7xl font-black mb-4 text-white drop-shadow-2xl">Guest Stories</h1>
-          <p className="text-xl text-white/80 max-w-2xl mx-auto">Discover why guests keep coming back to Ipponyari</p>
+          <h1 className="text-6xl md:text-7xl font-black mb-4 text-white drop-shadow-2xl">
+            <span className="text-[#ff6b6b]">Loved</span> by Our Guests
+          </h1>
+          <p className="text-lg text-white/80 max-w-3xl mx-auto">See how unforgettable flavors and warm hospitality turn first-time diners into regulars</p>
         </div>
 
         {/* Main Grid */}
@@ -199,7 +202,7 @@ export default function TestimonialsPage() {
                                     <Star
                                       key={i}
                                       className={`w-4 h-4 sm:w-5 sm:h-5 ${
-                                        i < testimonial.rating ? "text-[#ff6b6b] fill-[#ff6b6b]" : "text-white/40"
+                                        i < testimonial.rating ? "text-[#ffc46b] fill-[#ffc46b]" : "text-white/40"
                                       }`}
                                     />
                                   ))}
@@ -342,7 +345,7 @@ export default function TestimonialsPage() {
                         >
                           <Star
                             className={`w-8 h-8 transition-all ${
-                              star <= (hoverRating || rating) ? "text-[#ff6b6b] fill-[#ff6b6b]" : "text-white/30"
+                              star <= (hoverRating || rating) ? "text-[#ffc46b] fill-[#ffc46b]" : "text-white/30"
                             }`}
                           />
                         </button>
@@ -394,7 +397,9 @@ export default function TestimonialsPage() {
                 label: "Average Rating",
                 value: (testimonials.reduce((sum, t) => sum + t.rating, 0) / testimonials.length).toFixed(1),
               },
-              { label: "Happy Guests", value: testimonials.length },
+              { label: "Happy Guests", 
+                value: testimonials.filter((t) => t.rating >= 4).length,
+              },
               {
                 label: "5-Star Reviews",
                 value: testimonials.filter((t) => t.rating === 5).length,

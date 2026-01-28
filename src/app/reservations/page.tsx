@@ -365,15 +365,15 @@ export default function ReservationsPage() {
         {/* Header */}
         <div className="text-center mb-12 animate-in fade-in slide-in-from-top duration-700">
           <h1 className="text-5xl md:text-6xl font-black mb-2 text-white drop-shadow-2xl">
-            Reserve Your Spot
+            Your Table <span className="text-[#ff6b6b]">Awaits</span>
           </h1>
-          <p className="text-lg text-[#ff6b6b] font-medium">Join us at Ipponyari for an unforgettable dining experience</p>
+          <p className="text-lg text-white/80">An elevated Japanese dining experience begins with your reservation</p>
 
           {user && (
             <div className="mt-4 inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-full shadow-lg">
               <User className="w-4 h-4 text-[#ff6b6b]" />
               <span className="text-sm text-white">
-                Booking as <span className="font-semibold">{user.name}</span>
+                Reserving as <span className="font-semibold">{user.name}</span>
               </span>
             </div>
           )}
@@ -382,44 +382,48 @@ export default function ReservationsPage() {
         {/* Progress Bar */}
         <div className="mb-10">
           <div className="relative">
-            <div className="absolute top-5 left-0 right-0 flex items-center px-5">
-              <div className="flex-1 flex items-center justify-between">
-                {[1, 2, 3, 4, 5].map((i) => (
+            <div className="relative w-full px-5 mt-10">
+              {/* Progress Line Background */}
+              <div className="absolute top-5 left-5 right-5 h-1 bg-white/20 rounded"></div>
+
+              {/* Progress Line Fill */}
+              <div
+                className="absolute top-5 left-5 h-1 bg-white rounded transition-all duration-500"
+                style={{
+                  width: `calc(${((step - 1) / 4) * 100}%)`, // step-1 because first step = 0 fill
+                }}
+              ></div>
+
+              {/* Step Circles */}
+              <div className="relative flex justify-between">
+                {[1, 2, 3, 4, 5].map((s) => (
                   <div
-                    key={i}
-                    className={`h-1 rounded transition-all duration-300 ${i < step ? "bg-white" : "bg-white/20"}`}
-                    style={{ width: "calc(20% - 20px)" }}
-                  />
+                    key={s}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 transform ${s <= step
+                      ? "bg-white text-[#8B0000] shadow-xl scale-110"
+                      : "bg-white/20 text-white/50"
+                      }`}
+                  >
+                    {s}
+                  </div>
                 ))}
               </div>
             </div>
 
-            <div className="relative flex justify-between mb-3">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <div
-                  key={s}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300 z-10 ${s <= step ? "bg-white text-[#8B0000] shadow-xl scale-110" : "bg-white/20 text-white/50"
-                    }`}
-                >
-                  {s}
-                </div>
-              ))}
-            </div>
-
             <div className="flex justify-between text-center">
-              <div className="text-center text-xs text-white/70 font-medium" style={{ width: "40px" }}>
+              <div className="text-center text-xs text-white/70 font-medium" style={{ width: "50px" }}>
                 Reservation Details
               </div>
-              <div className="text-center text-xs text-white/70 font-medium" style={{ width: "40px" }}>
+              <div className="text-center text-xs text-white/70 font-medium" style={{ width: "50px" }}>
                 Guest Information
               </div>
-              <div className="text-center text-xs text-white/70 font-medium" style={{ width: "40px" }}>
+              <div className="text-center text-xs text-white/70 font-medium" style={{ width: "50px " }}>
                 Occasion Details
               </div>
-              <div className="text-center text-xs text-white/70 font-medium" style={{ width: "40px" }}>
+              <div className="text-center text-xs text-white/70 font-medium" style={{ width: "50px" }}>
                 Payment Details
               </div>
-              <div className="text-center text-xs text-white/70 font-medium" style={{ width: "40px" }}>
+              <div className="text-center text-xs text-white/70 font-medium" style={{ width: "50px" }}>
                 Confirmation
               </div>
             </div>
@@ -449,6 +453,7 @@ export default function ReservationsPage() {
                         name="date"
                         value={formData.date}
                         onChange={handleChange}
+                        min={getMinDate()}
                         required
                         className="w-full pl-12 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white placeholder-white/40"
                       />
@@ -480,7 +485,7 @@ export default function ReservationsPage() {
                           name="guests"
                           value={formData.guests}
                           onChange={handleChange}
-                          className="w-full pl-12 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg appearance-none text-white"
+                          className="w-full md:w-auto min-w-[120px] pl-12 pr-8 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white appearance-none"
                         >
                           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                             <option key={num} value={num} className="bg-[#8B0000] text-white">
@@ -499,7 +504,7 @@ export default function ReservationsPage() {
                           name="dining_preference"
                           value={formData.dining_preference}
                           onChange={handleChange}
-                          className="w-full pl-12 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg appearance-none text-white"
+                          className="w-full md:w-auto min-w-[120px] pl-12 pr-8 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white appearance-none"
                           required
                         >
                           {[
@@ -511,7 +516,7 @@ export default function ReservationsPage() {
                             "Family Seating",
                             "Group Dining",
                           ].map((option) => (
-                            <option key={option} value={option} className="bg-[#8B0000] text-white">
+                            <option key={option} value={option} className="bg-red-200 text-gray-900">
                               {option}
                             </option>
                           ))}
@@ -635,12 +640,18 @@ export default function ReservationsPage() {
                         required
                         className="w-full pl-12 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg appearance-none text-white"
                       >
-                        <option value="" disabled>Select occasion</option>
-                        <option value="Birthday">Birthday</option>
-                        <option value="Anniversary">Anniversary</option>
-                        <option value="Business Meeting">Business Meeting</option>
-                        <option value="Casual Dinner">Casual Dinner</option>
-                        <option value="Other">Other</option>
+                        {[
+                          "Select Occasion",
+                          "Birthday",
+                          "Anniversary",
+                          "Business Meeting",
+                          "Casual Dinner",
+                          "Other",
+                        ].map((option) => (
+                          <option key={option} value={option} className="bg-red-200 text-gray-900">
+                            {option}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -668,7 +679,7 @@ export default function ReservationsPage() {
               <div>
                 <div className="mb-8">
                   <h2 className="text-2xl font-bold text-white mb-2">Payment Details</h2>
-                  <p className="text-white/70">Secure your reservation with a payment (if applicable)</p>
+                  <p className="text-white/70">Secure your reservation</p>
                 </div>
 
                 <div className="space-y-6">
@@ -693,33 +704,40 @@ export default function ReservationsPage() {
                       required
                       className="w-full pl-4 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg appearance-none text-white"
                     >
-                      <option value="" disabled>Select payment method</option>
-                      <option value="credit_card">Credit Card</option>
-                      <option value="paypal">PayPal</option>
-                      <option value="gcash">GCash</option>
-                      <option value="security_bank">Security Bank</option>
-                      <option value="other">Other</option>
+                      {[
+                        "Credit Card",
+                        "PayPal",
+                        "GCash",
+                        "Security Bank",
+                        "Other",
+                      ].map((option) => (
+                        <option key={option} value={option} className="bg-red-200 max-w-md text-gray-900">
+                          {option}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
                   <div className="relative">
-                    <label className="block text-sm font-semibold text-white mb-3">Reference Number</label>
+                    <label className="block text-sm font-semibold text-white mb-3">Reference Number *</label>
                     <input
                       type="text"
                       name="payment_reference"
                       value={formData.payment_reference || ""}
                       onChange={handleChange}
+                      required
                       placeholder="Enter payment reference number"
                       className="w-full pl-4 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg text-white placeholder-white/40"
                     />
                   </div>
 
                   <div className="relative">
-                    <label className="block text-sm font-semibold text-white mb-3">Receipt Screenshot</label>
+                    <label className="block text-sm font-semibold text-white mb-3">Receipt Screenshot *</label>
                     <input
                       type="file"
                       name="payment_receipt"
                       accept="image/*"
+                      required
                       onChange={(e) => {
                         const file = e.target.files?.[0];
                         if (file) {
@@ -738,59 +756,74 @@ export default function ReservationsPage() {
 
             {/* Step 5: Reservation Details (Confirmation) */}
             {step === 5 && (
-              <div>
-                <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-white mb-2">Review & Confirm</h2>
-                  <p className="text-white/70">Please review your reservation details before submitting.</p>
+              <div className="space-y-8">
+                {/* Header */}
+                <div className="mb-4">
+                  <h2 className="text-3xl font-extrabold text-white mb-1">
+                    Review & Confirm
+                  </h2>
+                  <p className="text-white/70 text-md">
+                    Please review your reservation details before submitting.
+                  </p>
                 </div>
-                <div className="space-y-4 bg-white/10 rounded-xl p-6 border border-white/20">
-                  <div className="flex flex-wrap gap-4">
-                    <span className="text-white/80 font-semibold">Date:</span>
-                    <span className="text-white">{formData.date}</span>
-                    <span className="text-white/80 font-semibold">Time:</span>
-                    <span className="text-white">{formData.time}</span>
-                    <span className="text-white/80 font-semibold">Guests:</span>
-                    <span className="text-white">{formData.guests}</span>
-                    <span className="text-white/80 font-semibold">Dining Preference:</span>
-                    <span className="text-white">{formData.dining_preference}</span>
+
+                {/* Receipt Container */}
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-lg space-y-6">
+
+                  {/* Reservation Details */}
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/10 space-y-2">
+                    <h3 className="text-lg font-semibold text-white mb-2">Reservation Details</h3>
+                    <div className="grid grid-cols-2 gap-4 text-white/80">
+                      <span><span className="font-semibold">Date:</span> {formData.date}</span>
+                      <span><span className="font-semibold">Time:</span> {formData.time}</span>
+                      <span><span className="font-semibold">Guests:</span> {formData.guests}</span>
+                      <span><span className="font-semibold">Dining:</span> {formData.dining_preference}</span>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-4">
-                    <span className="text-white/80 font-semibold">Name:</span>
-                    <span className="text-white">{formData.name}</span>
-                    <span className="text-white/80 font-semibold">Email:</span>
-                    <span className="text-white">{formData.email}</span>
-                    <span className="text-white/80 font-semibold">Phone:</span>
-                    <span className="text-white">{formData.phone}</span>
-                  </div>g
-                  <div className="flex flex-wrap gap-4">
-                    <span className="text-white/80 font-semibold">Occasion:</span>
-                    <span className="text-white">{formData.occasion_type}</span>
-                    <span className="text-white/80 font-semibold">Instructions:</span>
-                    <span className="text-white">{formData.occasion_instructions || '-'}</span>
+
+                  {/* Guest Information */}
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/10 space-y-2">
+                    <h3 className="text-lg font-semibold text-white mb-2">Guest Information</h3>
+                    <div className="flex flex-col gap-4 text-white/80">
+                      <span><span className="font-semibold">Name:</span> {formData.name}</span>
+                      <span><span className="font-semibold">Email:</span> {formData.email}</span>
+                      <span><span className="font-semibold">Phone:</span> {formData.phone}</span>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-4">
-                    <span className="text-white/80 font-semibold">Reservation Fee:</span>
-                    <span className="text-white">₱{formData.reservation_fee || '0.00'}</span>
-                    <span className="text-white/80 font-semibold">Payment Method:</span>
-                    <span className="text-white">{formData.payment_method}</span>
-                    <span className="text-white/80 font-semibold">Reference:</span>
-                    <span className="text-white">{formData.payment_reference || '-'}</span>
-                    {formData.payment_receipt && (
-                      <span className="text-white/80 font-semibold">Receipt:</span>
-                    )}
-                    {formData.payment_receipt && (
-                      <span className="text-white">{formData.payment_receipt.name}</span>
-                    )}
+
+                  {/* Occasion */}
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/10 space-y-2">
+                    <h3 className="text-lg font-semibold text-white mb-2">Occasion</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-white/80">
+                      <span><span className="font-semibold">Type:</span> {formData.occasion_type}</span>
+                      <span><span className="font-semibold">Instructions:</span> {formData.occasion_instructions || '-'}</span>
+                    </div>
                   </div>
+
+                  {/* Payment */}
+                  <div className="bg-white/5 rounded-xl p-4 border border-white/10 space-y-2">
+                    <h3 className="text-lg font-semibold text-white mb-2">Payment</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-white/80">
+                      <span><span className="font-semibold">Reservation Fee:</span> ₱{formData.reservation_fee || '0.00'}</span>
+                      <span><span className="font-semibold">Payment Method:</span> {formData.payment_method}</span>
+                      <span><span className="font-semibold">Reference:</span> {formData.payment_reference || '-'}</span>
+                      {formData.payment_receipt && (
+                        <span><span className="font-semibold">Receipt:</span> {formData.payment_receipt.name}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Special Requests */}
                   {formData.special_requests && (
-                    <div className="flex flex-wrap gap-4">
-                      <span className="text-white/80 font-semibold">Special Requests:</span>
-                      <span className="text-white">{formData.special_requests}</span>
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                      <h3 className="text-lg font-semibold text-white mb-2">Special Requests</h3>
+                      <p className="text-white/80">{formData.special_requests}</p>
                     </div>
                   )}
                 </div>
               </div>
             )}
+
 
             {/* Navigation Buttons */}
             <div className="flex gap-4 mt-8">
@@ -819,7 +852,6 @@ export default function ReservationsPage() {
                   className="flex-1 px-6 py-3 bg-white hover:bg-white/90 disabled:bg-white/20 text-[#8B0000] disabled:text-white/50 font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg disabled:shadow-none hover:scale-105 disabled:hover:scale-100"
                 >
                   {loading ? "Confirming..." : "Confirm Reservation"}
-                  <CheckCircle className="w-5 h-5" />
                 </button>
               )}
             </div>

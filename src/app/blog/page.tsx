@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, X } from "lucide-react"
+import { ArrowRight, X, ChefHat, Newspaper } from "lucide-react"
 
 interface BlogPost {
   id: number
@@ -51,6 +51,12 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#8B0000] via-[#6B0000] to-[#2B0000] relative overflow-hidden">
+      {/* Animated background patterns */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-[#dc143c]/30 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#dc143c]/30 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/4 w-64 h-64 bg-[#dc143c]/20 rounded-full blur-3xl animate-pulse delay-500"></div>
+      </div>
       {/* Decorative elements */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-[#dc143c] rounded-full mix-blend-lighten filter blur-3xl opacity-20 animate-blob"></div>
       <div className="absolute top-0 right-0 w-96 h-96 bg-[#dc143c] rounded-full mix-blend-lighten filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
@@ -59,11 +65,17 @@ export default function BlogPage() {
       <div className="container mx-auto px-4 py-16 relative z-10">
         {/* Header */}
         <div className="text-center mb-12 animate-in fade-in slide-in-from-top duration-700">
-          <h2 className="text-5xl md:text-6xl font-bold mb-4 text-white drop-shadow-2xl">
-            OUR <span className="text-[#ff6b6b]">BLOG</span>
+          <div className="inline-block mb-4">
+            <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm px-6 py-3 rounded-full border border-white/10">
+              <Newspaper className="h-5 w-5 text-[#f38686] animate-pulse" />
+              <span className="text-[#f38686] font-medium text-xs uppercase tracking-widest">Japanese Culinary Stories</span>
+            </div>
+          </div>
+          <h2 className="text-5xl md:text-6xl font-bold mb-4 text-white drop-shadow-2xl uppercase">
+            From our <span className="text-[#ff6b6b]">kitchen</span>
           </h2>
           <p className="text-xl text-white/80 max-w-2xl mx-auto">
-            Discover stories, recipes, and insights from our kitchen
+            Explore traditions, flavors, and inspirations behind every dish we serve
           </p>
         </div>
 
