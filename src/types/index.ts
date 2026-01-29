@@ -41,7 +41,7 @@ export interface Order {
   total_amount: number
   subtotal: number
   delivery_fee: number
-  payment_method: "cash" | "gcash" | "paypal" | "bpi" | "maya"
+  payment_method: "cash" | "gcash" | "bpi" | "security_bank" | "other"
   payment_status: "pending" | "paid" | "failed" | "refunded"
   order_status: "pending" | "confirmed" | "preparing" | "ready" | "out_for_delivery" | "delivered" | "cancelled"
   delivery_address: string

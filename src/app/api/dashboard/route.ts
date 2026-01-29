@@ -46,7 +46,7 @@ export async function GET() {
           keyMetrics: {
             totalRevenue: 0,
             totalOrders: 0,
-            averageOrderValue: 0,
+            overallRating: 0,
             totalCustomers: 0,
             growthRate: 0,
           },

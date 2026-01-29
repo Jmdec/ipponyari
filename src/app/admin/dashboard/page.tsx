@@ -27,8 +27,9 @@ interface AnalyticsData {
   keyMetrics: {
     totalRevenue: number
     totalOrders: number
-    averageOrderValue: number
     totalCustomers: number
+    overallRating: number
+    totalReviews: number
     growthRate: number
   }
   revenueData: Array<{ date: string; revenue: number; orders: number }>
@@ -36,6 +37,13 @@ interface AnalyticsData {
   paymentMethodData: Array<{ method: string; count: number; percentage: number }>
   popularProducts: Array<{ name: string; orders: number; revenue: number; category: string; is_spicy: boolean }>
   categoryData: Array<{ category: string; orders: number; revenue: number }>
+  reservationData: {
+    totalWalkIns: number
+    totalOnline: number
+    walkInPercentage: number
+    onlinePercentage: number
+    trends: Array<{ date: string; walkIn: number; online: number; total: number }>
+  }
   productsCount: number
 }
 
@@ -65,7 +73,7 @@ const MetricCard = ({
   subtitle: string
   trend?: "up" | "down" | "neutral"
 }) => (
-  <Card className="group relative overflow-hidden border border-gray-200 bg-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">
+  <Card className="group relative overflow-hidden border border-gray-200 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">
     <div className="absolute left-0 top-0 h-full w-[2px] bg-[#dc143c]/70" />
 
     <CardContent className="px-5">
@@ -96,7 +104,6 @@ const MetricCard = ({
         )}
       </div>
 
-      {/* subtitle */}
       {subtitle && (
         <p className="text-center mt-2 text-xs text-gray-400">
           {subtitle}
@@ -104,70 +111,51 @@ const MetricCard = ({
       )}
     </CardContent>
   </Card>
-
 )
 
 export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isMobile, setIsMobile] = useState(false)
-  const [apiError, setApiError] = useState<string | null>(null)
+  const [isDesktop, setIsDesktop] = useState(false)
+  const [period, setPeriod] = useState<"daily" | "weekly" | "monthly">("daily")
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth < 1024) // lg breakpoint
     }
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
+    checkDesktop()
+    window.addEventListener("resize", checkDesktop)
+    return () => window.removeEventListener("resize", checkDesktop)
   }, [])
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        console.log("[v0] Fetching analytics from /api/dashboard...")
-        const response = await fetch("/api/dashboard")
-        console.log("[v0] Response status:", response.status)
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
+        setLoading(true)
+        const response = await fetch(`/api/dashboard?period=${period}`)
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
         const data = await response.json()
-        console.log("[v0] API Response:", data)
-
-        if (data.success) {
-          setAnalytics(data.data)
-          if (data.data.error) {
-            setApiError(data.data.error)
-          }
-          console.log("[v0] Analytics data set successfully")
-        } else {
-          throw new Error(data.message || "Failed to fetch analytics")
-        }
+        if (data.success) setAnalytics(data.data)
+        else throw new Error(data.message || "Failed to fetch analytics")
       } catch (error) {
-        console.error("[v0] Failed to fetch analytics:", error)
         setError(error instanceof Error ? error.message : "Unknown error occurred")
       } finally {
         setLoading(false)
       }
     }
-
     fetchAnalytics()
-  }, [])
+  }, [period])
 
   if (loading) {
     return (
-      <SidebarProvider defaultOpen={!isMobile}>
-        <div className="flex min-h-screen w-full bg-gradient-to-br from-orange-50 to-red-50">
+      <SidebarProvider defaultOpen={!isDesktop}>
+        <div className="flex min-h-screen w-full bg-gradient-to-br from-red-50 to-red-50">
           <AppSidebar />
-          <div className={`flex-1 min-w-0 ${isMobile ? "ml-0" : "ml-72"}`}>
-            <div className="flex items-center justify-center min-h-screen w-full">
-              <div className="flex items-center gap-3 bg-white px-8 py-6 rounded-2xl shadow-lg">
-                <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
-                <span className="text-gray-700 font-medium text-lg">Loading Dashboard...</span>
-              </div>
+          <div className="flex-1 min-w-0 flex items-center justify-center">
+            <div className="flex items-center gap-3 bg-white px-8 py-6 rounded-2xl shadow-lg">
+              <Loader2 className="h-6 w-6 animate-spin text-red-500" />
+              <span className="text-gray-700 font-medium text-lg">Loading Dashboard...</span>
             </div>
           </div>
         </div>
@@ -177,29 +165,24 @@ export default function AdminDashboard() {
 
   if (error || !analytics) {
     return (
-      <SidebarProvider defaultOpen={!isMobile}>
+      <SidebarProvider defaultOpen={!isDesktop}>
         <div className="flex min-h-screen w-full bg-gray-50">
           <AppSidebar />
-          <div className={`flex-1 min-w-0 ${isMobile ? "ml-0" : "ml-72"}`}>
-            <div className="flex items-center justify-center min-h-screen w-full p-4">
-              <Card className="max-w-md w-full border-red-200">
-                <CardHeader>
-                  <CardTitle className="text-red-600">Failed to Load Analytics</CardTitle>
-                  <CardDescription>{error || "No data available"}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="text-sm text-gray-600">
-                    Make sure NEXT_PUBLIC_API_URL is set and your Laravel API is running
-                  </p>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
-                  >
-                    Retry
-                  </button>
-                </CardContent>
-              </Card>
-            </div>
+          <div className="flex-1 min-w-0 flex items-center justify-center p-4">
+            <Card className="max-w-md w-full border-red-200">
+              <CardHeader>
+                <CardTitle className="text-red-600">Failed to Load Analytics</CardTitle>
+                <CardDescription>{error || "No data available"}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+                >
+                  Retry
+                </button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </SidebarProvider>
@@ -209,340 +192,286 @@ export default function AdminDashboard() {
   console.log("[v0] Rendering dashboard with analytics:", analytics)
 
   return (
-    <SidebarProvider defaultOpen={!isMobile}>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-orange-50 to-red-50">
+    <SidebarProvider defaultOpen={!isDesktop}>
+      <div className="flex min-h-screen w-full bg-gradient-to-br from-red-50 to-red-50">
         <AppSidebar />
-        <div className={`flex-1 min-w-0 ${isMobile ? "ml-0" : "ml-72"}`}>
-          {isMobile && (
+        <div className={`flex-1 min-w-0 ${isDesktop ? "ml-0" : "ml-72"}`}>
+          {isDesktop && (
             <div className="sticky top-0 z-50 flex h-14 items-center gap-3 border-b bg-white px-4 shadow-sm">
               <SidebarTrigger className="-ml-1" />
-              <div className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 overflow-hidden group-hover:scale-105 transition-transform duration-300">
-                <Image src="/logoippon.png" alt="Ipponyari Logo" fill className="object-contain" />
-              </div>
+              <Image
+                src="/logoippon.png"
+                alt="Ipponyari Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
               <h1 className="text-lg font-bold text-gray-900">Ipponyari Japanese Restaurant</h1>
             </div>
           )}
 
           <main className="p-4 md:p-6 lg:p-8 space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Dashboard</h1>
                 <p className="text-gray-600 mt-1">Restaurant analytics and insights</p>
               </div>
-              <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-gray-700">Live</span>
+
+              {/* Period Selector */}
+              <div className="flex gap-2">
+                {["daily", "weekly", "monthly"].map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPeriod(p as any)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition
+                      ${period === p
+                        ? "bg-red-600 text-white"
+                        : "bg-white border text-gray-600 hover:bg-gray-100"}`}
+                  >
+                    {p.charAt(0).toUpperCase() + p.slice(1)}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {!analytics.keyMetrics || analytics.keyMetrics.totalOrders === 0 ? (
-              /* Empty State */
-              <div className="space-y-6">
-                <Card className="border-0 shadow-sm">
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className="p-3 bg-orange-100 rounded-lg">
-                        <ShoppingCart className="w-6 h-6 text-orange-600" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-xl">No Orders Yet</CardTitle>
-                        <CardDescription>Start receiving orders to see analytics</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="bg-orange-50 border-l-4 border-orange-400 rounded-lg p-4">
-                      <h4 className="font-semibold text-orange-900 mb-2">Getting Started</h4>
-                      <p className="text-orange-800 text-sm mb-3">
-                        {apiError || "There are currently no orders in the system. This could be because the database is empty or the API endpoint requires authentication."}
-                      </p>
-                    </div>
+            {/* Key Metrics */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+              <MetricCard
+                title="Total Revenue"
+                value={`₱${(analytics.keyMetrics?.totalRevenue || 0).toLocaleString()}`}
+                change={`${analytics.keyMetrics?.growthRate || 0}%`}
+                icon={DollarSign}
+                subtitle="Last 30 days"
+                trend="up"
+              />
+              <MetricCard
+                title="Total Orders"
+                value={(analytics.keyMetrics?.totalOrders || 0).toLocaleString()}
+                icon={ShoppingCart}
+                subtitle="All time orders"
+                trend="neutral"
+              />
+              <MetricCard
+                title="Rating Average"
+                value={`${analytics.keyMetrics.overallRating.toFixed(1)} / 5`}
+                icon={TrendingUp}
+                subtitle="Customer satisfaction"
+                trend="up"
+              />
+              <MetricCard
+                title="Customers"
+                value={(analytics.keyMetrics?.totalCustomers || 0).toLocaleString()}
+                icon={Users}
+                subtitle="Unique customers"
+                trend="neutral"
+              />
+            </div>
 
-                    {analytics.productsCount > 0 && (
-                      <div className="bg-green-50 border-l-4 border-green-400 rounded-lg p-4">
-                        <h4 className="font-semibold text-green-900 mb-2">✓ Products Ready</h4>
-                        <p className="text-green-800 text-sm">
-                          Found {analytics.productsCount} products in your catalog. Your products are ready for orders!
+            {/* Category & Products */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Category Performance */}
+              <Card className="border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold">Category Performance</CardTitle>
+                  <CardDescription>Orders & Revenue by Category</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {analytics.categoryData && analytics.categoryData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={320}>
+                      <BarChart data={analytics.categoryData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="category" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="orders" name="Orders" fill="#ef4444" radius={[6, 6, 0, 0]} />
+                        <Bar dataKey="revenue" name="Revenue" fill="#f97316" radius={[6, 6, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-[320px] flex items-center justify-center text-gray-400">
+                      No category data
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Popular Products */}
+              <Card className="border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold">Top Products</CardTitle>
+                  <CardDescription>Best performing menu items</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {analytics.popularProducts && analytics.popularProducts.length > 0 ? (
+                    <div className="space-y-3">
+                      {analytics.popularProducts.map((product, index) => (
+                        <div
+                          key={product.name}
+                          className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-red-500 to-red-500 text-white rounded-lg font-bold text-lg">
+                              {index + 1}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-gray-900">{product.name}</h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="secondary" className="text-xs">{product.category}</Badge>
+                                {product.is_spicy && (
+                                  <Badge variant="outline" className="text-xs border-red-300 text-red-700">🌶️ Spicy</Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-gray-900">{product.orders}</div>
+                            <div className="text-sm text-gray-500">orders</div>
+                            <div className="text-sm font-medium text-red-600 mt-1">₱{product.revenue.toLocaleString()}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-12 text-center text-gray-400">
+                      No product data available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Customer Map */}
+            <Card className="border-0 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold">Customer Map</CardTitle>
+                <CardDescription>Walk-in vs Online Reservations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={[
+                      { type: "Walk-in", count: analytics.reservationData.totalWalkIns },
+                      { type: "Online", count: analytics.reservationData.totalOnline },
+                    ]}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="type" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#f97316" radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Order Status & Payment Method */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Order Status */}
+              <Card className="border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold">Order Status</CardTitle>
+                  <CardDescription>Current order distribution</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center">
+                  {analytics.orderStatusData && analytics.orderStatusData.length > 0 ? (
+                    <>
+                      <ResponsiveContainer width="100%" height={280}>
+                        <PieChart>
+                          <Pie
+                            data={analytics.orderStatusData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={70}
+                            outerRadius={100}
+                            dataKey="count"
+                            paddingAngle={3}
+                            cornerRadius={8}
+                          >
+                            {analytics.orderStatusData.map((entry, i) => (
+                              <Cell key={i} fill={statusColors[entry.status as keyof typeof statusColors]} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                      {/* Total Orders in center */}
+                      <div className="mt-2 text-center">
+                        <p className="text-sm text-gray-500">Total Orders</p>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {analytics.orderStatusData.reduce((acc, item) => acc + item.count, 0)}
                         </p>
                       </div>
-                    )}
 
-                    <div className="grid md:grid-cols-2 gap-4 pt-4">
-                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                        <h4 className="font-semibold text-gray-900 text-sm">Laravel Routes</h4>
-                        <pre className="bg-gray-900 text-green-400 p-3 rounded text-xs overflow-x-auto">
-                          {`Route::get('/analytics', 
-                            [OrderController::class, 'analytics']
-                          );`}
-                        </pre>
-                      </div>
-                      <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                        <h4 className="font-semibold text-gray-900 text-sm">Environment</h4>
-                        <pre className="bg-gray-900 text-green-400 p-3 rounded text-xs overflow-x-auto">
-                          {`NEXT_PUBLIC_API_URL=
-                          http://your-api.com`}
-                        </pre>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            ) : (
-              <>
-                {/* Key Metrics */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-                  <MetricCard
-                    title="Total Revenue"
-                    value={`₱${(analytics.keyMetrics?.totalRevenue || 0).toLocaleString()}`}
-                    change={`${analytics.keyMetrics?.growthRate || 0}%`}
-                    icon={DollarSign}
-                    subtitle="Last 30 days"
-                    trend="up"
-                  />
-                  <MetricCard
-                    title="Total Orders"
-                    value={(analytics.keyMetrics?.totalOrders || 0).toLocaleString()}
-                    icon={ShoppingCart}
-                    subtitle="All time orders"
-                    trend="neutral"
-                  />
-                  <MetricCard
-                    title="Average Order"
-                    value={`₱${(analytics.keyMetrics?.averageOrderValue || 0).toLocaleString()}`}
-                    icon={TrendingUp}
-                    subtitle="Per order value"
-                    trend="up"
-                  />
-                  <MetricCard
-                    title="Customers"
-                    value={(analytics.keyMetrics?.totalCustomers || 0).toLocaleString()}
-                    icon={Users}
-                    subtitle="Unique customers"
-                    trend="neutral"
-                  />
-                </div>
-
-                {/* Revenue Chart */}
-                <Card className="border-0 shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-xl font-bold">Revenue Overview</CardTitle>
-                    <CardDescription>Daily revenue and order trends</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {analytics.revenueData && analytics.revenueData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height={350}>
-                        <AreaChart data={analytics.revenueData}>
-                          <defs>
-                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
-                              <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                          <XAxis dataKey="date" stroke="#6b7280" style={{ fontSize: '12px' }} />
-                          <YAxis stroke="#6b7280" style={{ fontSize: '12px' }} />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: '#ffffff',
-                              border: '1px solid #e5e7eb',
-                              borderRadius: '8px',
-                              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                            }}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="revenue"
-                            stroke="#f97316"
-                            fill="url(#colorRevenue)"
-                            strokeWidth={2}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="h-[350px] flex items-center justify-center text-gray-400">
-                        No revenue data available
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Order Status & Payment Methods */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card className="border-0 shadow-sm">
-                    <CardHeader>
-                      <CardTitle className="text-xl font-bold">Order Status</CardTitle>
-                      <CardDescription>Current order distribution</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-col items-center">
-                      {analytics.orderStatusData && analytics.orderStatusData.length > 0 ? (
-                        <>
-                          <ResponsiveContainer width="100%" height={250}>
-                            <PieChart>
-                              <Pie
-                                data={analytics.orderStatusData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={70}
-                                outerRadius={100}
-                                dataKey="count"
-                                paddingAngle={3}
-                                cornerRadius={8}
-                              >
-                                {analytics.orderStatusData.map((entry, index) => (
-                                  <Cell
-                                    key={`cell-${index}`}
-                                    fill={statusColors[entry.status as keyof typeof statusColors]}
-                                  />
-                                ))}
-                              </Pie>
-                            </PieChart>
-                          </ResponsiveContainer>
-
-                          {/* Total Orders in center */}
-                          <div className="mt-2 text-center">
-                            <p className="text-sm text-gray-500">Total Orders</p>
-                            <p className="text-2xl font-bold text-gray-900">
-                              {analytics.orderStatusData.reduce((acc, item) => acc + item.count, 0)}
-                            </p>
-                          </div>
-
-                          {/* Legend */}
-                          <div className="grid grid-cols-2 gap-2 mt-4 w-full">
-                            {analytics.orderStatusData.map((item) => (
-                              <div key={item.status} className="flex items-center gap-2 text-sm">
-                                <div
-                                  className="w-3 h-3 rounded-full"
-                                  style={{ backgroundColor: statusColors[item.status as keyof typeof statusColors] }}
-                                />
-                                <span className="text-gray-600 capitalize">{item.status}</span>
-                                <span className="text-gray-900 font-medium ml-auto">{item.count}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="h-[250px] flex items-center justify-center text-gray-400">
-                          No order status data
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-
-                  <Card className="border-0 shadow-sm">
-                    <CardHeader>
-                      <CardTitle className="text-xl font-bold">Payment Methods</CardTitle>
-                      <CardDescription>Preferred payment options</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {analytics.paymentMethodData && analytics.paymentMethodData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={300}>
-                          <BarChart data={analytics.paymentMethodData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                            <XAxis dataKey="method" stroke="#6b7280" style={{ fontSize: '12px' }} />
-                            <YAxis stroke="#6b7280" style={{ fontSize: '12px' }} />
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: '#ffffff',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '8px'
-                              }}
+                      {/* Legend */}
+                      <div className="grid grid-cols-2 gap-2 mt-4 w-full">
+                        {analytics.orderStatusData.map((item) => (
+                          <div key={item.status} className="flex items-center gap-2 text-sm">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: statusColors[item.status as keyof typeof statusColors] }}
                             />
-                            <Bar dataKey="count" fill="#f97316" radius={[8, 8, 0, 0]} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      ) : (
-                        <div className="h-[300px] flex items-center justify-center text-gray-400">
-                          No payment data
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Popular Products */}
-                <Card className="border-0 shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-xl font-bold">Top Products</CardTitle>
-                    <CardDescription>Best performing menu items</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {analytics.popularProducts && analytics.popularProducts.length > 0 ? (
-                      <div className="space-y-3">
-                        {analytics.popularProducts.map((product, index) => (
-                          <div
-                            key={product.name}
-                            className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors"
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-lg font-bold text-lg">
-                                {index + 1}
-                              </div>
-                              <div>
-                                <h3 className="font-semibold text-gray-900">{product.name}</h3>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <Badge variant="secondary" className="text-xs">
-                                    {product.category}
-                                  </Badge>
-                                  {product.is_spicy && (
-                                    <Badge variant="outline" className="text-xs border-orange-300 text-orange-700">
-                                      🌶️ Spicy
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-bold text-gray-900">{product.orders}</div>
-                              <div className="text-sm text-gray-500">orders</div>
-                              <div className="text-sm font-medium text-orange-600 mt-1">
-                                ₱{product.revenue.toLocaleString()}
-                              </div>
-                            </div>
+                            <span className="text-gray-600 capitalize">{item.status}</span>
+                            <span className="text-gray-900 font-medium ml-auto">{item.count}</span>
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <div className="py-12 text-center text-gray-400">
-                        No product data available
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                    </>
+                  ) : (
+                    <div className="h-[280px] flex items-center justify-center text-gray-400">
+                      No order status data
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-                {/* Category Performance */}
-                <Card className="border-0 shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-xl font-bold">Category Performance</CardTitle>
-                    <CardDescription>Revenue breakdown by category</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {analytics.categoryData && analytics.categoryData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={analytics.categoryData} layout="vertical">
-                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                          <XAxis type="number" stroke="#6b7280" style={{ fontSize: '12px' }} />
-                          <YAxis dataKey="category" type="category" stroke="#6b7280" style={{ fontSize: '12px' }} width={100} />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: '#ffffff',
-                              border: '1px solid #e5e7eb',
-                              borderRadius: '8px'
-                            }}
-                          />
-                          <Bar dataKey="revenue" fill="#f97316" radius={[0, 8, 8, 0]} />
-                        </BarChart>
+              {/* Payment Method */}
+              <Card className="border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-xl font-bold">Payment Methods</CardTitle>
+                  <CardDescription>Preferred payment options</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {analytics.paymentMethodData && analytics.paymentMethodData.length > 0 ? (
+                    <>
+                      <ResponsiveContainer width="100%" height={280}>
+                        <PieChart>
+                          <Pie
+                            data={analytics.paymentMethodData}
+                            innerRadius={65}
+                            outerRadius={100}
+                            dataKey="count"
+                            paddingAngle={4}
+                          >
+                            {analytics.paymentMethodData.map((_, i) => (
+                              <Cell key={i} fill={paymentColors[i % paymentColors.length]} />
+                            ))}
+                          </Pie>
+                        </PieChart>
                       </ResponsiveContainer>
-                    ) : (
-                      <div className="h-[300px] flex items-center justify-center text-gray-400">
-                        No category data
+
+                      {/* Legend */}
+                      <div className="grid grid-cols-2 gap-2 mt-4 w-full">
+                        {analytics.paymentMethodData.map((item, i) => (
+                          <div key={item.method} className="flex items-center gap-2 text-sm">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: paymentColors[i % paymentColors.length] }}
+                            />
+                            <span className="text-gray-600 capitalize">{item.method}</span>
+                            <span className="text-gray-900 font-medium ml-auto">{item.count}</span>
+                          </div>
+                        ))}
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </>
-            )}
+                    </>
+                  ) : (
+                    <div className="h-[280px] flex items-center justify-center text-gray-400">
+                      No payment data
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </main>
         </div>
       </div>

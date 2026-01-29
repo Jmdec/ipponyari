@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
-import { useIsMobile } from "@/hooks/use-mobile"
+import Image from "next/image"
 
 interface Reservation {
   id: number
@@ -24,12 +24,17 @@ interface Reservation {
   status: "pending" | "confirmed" | "cancelled"
   created_at: string
   reservation_fee_paid: boolean
+  dining_preference: "main dining" | "private tatami roon" | "chef's counter" | "window seating" | "celebration setup" | "family seating" | "group dining"
+  occasion_type?: "casual dining" | "birthday" | "business dinner" | "anniversary" | "private event"
+  reservation_fee?: number
   payment_method?: string
   payment_reference?: string
   payment_screenshot?: string
 }
 
 type ReservationStatus = "pending" | "confirmed" | "cancelled"
+type DiningPreference = Reservation["dining_preference"]
+type OccasionType = Reservation["occasion_type"]
 
 export default function ReservationsAdmin() {
   const [reservations, setReservations] = useState<Reservation[]>([])
@@ -37,7 +42,17 @@ export default function ReservationsAdmin() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null)
   const [isAddingReservation, setIsAddingReservation] = useState(false)
-  const isMobile = useIsMobile()
+  const [isWalkInGuest, setIsWalkInGuest] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth < 1024) // lg breakpoint
+    }
+    checkDesktop()
+    window.addEventListener("resize", checkDesktop)
+    return () => window.removeEventListener("resize", checkDesktop)
+  }, [])
 
   const [formData, setFormData] = useState({
     name: "",
@@ -46,6 +61,8 @@ export default function ReservationsAdmin() {
     date: "",
     time: "",
     guests: 1,
+    dining_preference: "main dining" as Reservation["dining_preference"],
+    occasion_type: "casual dining" as Reservation["occasion_type"],
     special_requests: "",
     status: "pending" as ReservationStatus,
   })
@@ -206,8 +223,39 @@ export default function ReservationsAdmin() {
         guests: 1,
         special_requests: "",
         status: "pending",
+        dining_preference: "main dining",
+        occasion_type: "casual dining",
       })
       setIsAddingReservation(false)
+      fetchReservations()
+    } catch (error) {
+      console.error("Error creating reservation:", error)
+    }
+  }
+
+  async function handleWalkInGuest() {
+    try {
+      const response = await fetch("/api/reservations", {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(formData),
+      })
+
+      if (!response.ok) throw new Error("Failed to create reservation")
+
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        date: "",
+        time: "",
+        guests: 1,
+        special_requests: "",
+        status: "pending",
+        dining_preference: "main dining",
+        occasion_type: "casual dining",
+      })
+      setIsWalkInGuest(false)
       fetchReservations()
     } catch (error) {
       console.error("Error creating reservation:", error)
@@ -259,256 +307,436 @@ export default function ReservationsAdmin() {
   }
 
   return (
-    <SidebarProvider defaultOpen={!isMobile}>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-orange-50 to-red-50">
+    <SidebarProvider defaultOpen={!isDesktop}>
+      <div className="flex min-h-screen w-full bg-gradient-to-br from-red-50 to-red-50">
         <AppSidebar />
-        <div className={`flex-1 min-w-0 ${isMobile ? "ml-0" : "ml-72"}`}>
-          <div className="flex items-center gap-2 p-4 border-b">
-            <SidebarTrigger />
-            <h1 className="text-lg font-semibold">Reservations Calendar</h1>
-          </div>
+        <div className={`flex-1 min-w-0 ${isDesktop ? "ml-0" : "ml-72"}`}>
+          {isDesktop && (
+            <div className="sticky top-0 z-50 flex h-14 items-center gap-3 border-b bg-white px-4 shadow-sm">
+              <SidebarTrigger className="-ml-1" />
+              <Image
+                src="/logoippon.png"
+                alt="Ipponyari Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
+              <h1 className="text-lg font-bold text-gray-900">Ipponyari Japanese Restaurant</h1>
+            </div>
+          )}
 
-          <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 md:mb-8">
-              <div className="flex items-center gap-2 sm:gap-4">
-                <h2 className="text-xl sm:text-2xl font-bold">{formatMonthYear(currentDate)}</h2>
-                <Button variant="outline" size="sm" onClick={goToToday}>
-                  Today
-                </Button>
-              </div>
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <Button variant="outline" size="icon" onClick={previousMonth}>
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <Button variant="outline" size="icon" onClick={nextMonth}>
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-                <Button onClick={() => setIsAddingReservation(true)} className="flex-1 sm:flex-none">
-                  <Plus className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:inline">New Reservation</span>
-                  <span className="sm:hidden">New</span>
-                </Button>
+          <main className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Reservation Management</h1>
+                <p className="text-gray-600 mt-1">Manage your restaurant&apos;s reservations</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-1 sm:gap-2">
-              {weekDays.map(day => (
-                <div key={day} className="p-1 sm:p-2 text-center font-semibold text-xs sm:text-sm text-gray-600">
-                  <span className="hidden sm:inline">{day}</span>
-                  <span className="sm:hidden">{day.substring(0, 1)}</span>
-                </div>
-              ))}
+            <div className="bg-white/70 backdrop-blur-sm shadow-xl p-0 pb-5 border-red-100 border mt-6 rounded-xl">
 
-              {days.map((date, index) => {
-                const dayReservations = getReservationsForDate(date)
-
-                return (
-                  <Card
-                    key={index}
-                    className={`min-h-[80px] sm:min-h-[100px] lg:min-h-[120px] ${!date ? 'invisible' : ''} ${isToday(date) ? 'ring-2 ring-blue-500' : ''
-                      }`}
-                  >
-                    <CardContent className="p-1 sm:p-2">
-                      {date && (
-                        <>
-                          <div className="text-xs sm:text-sm font-semibold mb-1 sm:mb-2 text-gray-700">
-                            {date.getDate()}
-                          </div>
-                          <div className="space-y-0.5 sm:space-y-1">
-                            {dayReservations.map(reservation => (
-                              <button
-                                key={reservation.id}
-                                onClick={() => setSelectedReservation(reservation)}
-                                className="w-full text-left px-1 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs truncate transition-colors bg-green-100 hover:bg-green-200 text-green-800 font-medium"
-                              >
-                                <span className="hidden sm:inline">{reservation.time.substring(0, 5)} - </span>
-                                {reservation.name}
-                              </button>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-
-            <Dialog open={!!selectedReservation} onOpenChange={() => setSelectedReservation(null)}>
-              <DialogContent className="max-w-[95vw] sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Reservation Details</DialogTitle>
-                </DialogHeader>
-                {selectedReservation && (
-                  <div className="space-y-3 sm:space-y-4 max-h-[70vh] overflow-y-auto">
-                    <div>
-                      <label className="text-xs sm:text-sm font-semibold text-gray-600">Name</label>
-                      <p className="text-base sm:text-lg">{selectedReservation.name}</p>
-                    </div>
-
-                    <div>
-                      <label className="text-xs sm:text-sm font-semibold text-gray-600">Email</label>
-                      <p className="text-sm sm:text-base break-all">{selectedReservation.email}</p>
-                    </div>
-
-                    <div>
-                      <label className="text-xs sm:text-sm font-semibold text-gray-600">Phone</label>
-                      <p className="text-sm sm:text-base">{selectedReservation.phone}</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                      <div>
-                        <label className="text-xs sm:text-sm font-semibold text-gray-600">Date</label>
-                        <p className="text-sm sm:text-base">{formatDate(selectedReservation.date)}</p>
-                      </div>
-                      <div>
-                        <label className="text-xs sm:text-sm font-semibold text-gray-600">Time</label>
-                        <p className="text-sm sm:text-base">{formatTime(selectedReservation.time)}</p>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-xs sm:text-sm font-semibold text-gray-600">Guests</label>
-                      <p className="text-sm sm:text-base">{selectedReservation.guests} people</p>
-                    </div>
-
-                    {selectedReservation.special_requests && (
-                      <div>
-                        <label className="text-xs sm:text-sm font-semibold text-gray-600">Special Requests</label>
-                        <p className="text-xs sm:text-sm">{selectedReservation.special_requests}</p>
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="text-xs sm:text-sm font-semibold text-gray-600 block mb-2">Status</label>
-                      <Select
-                        value={selectedReservation.status}
-                        onValueChange={(value: ReservationStatus) =>
-                          handleStatusChange(selectedReservation.id, value)
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="confirmed">Confirmed</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Payment Info */}
-                    <div className="border-t pt-3 mt-3">
-                      <label className="text-xs sm:text-sm font-semibold text-gray-600 block mb-1">Payment Info</label>
-                      <div className="space-y-1">
-                        <div>
-                          <span className="font-semibold">Status:</span>{" "}
-                          <span>{selectedReservation.reservation_fee_paid ? "Paid" : "Unpaid"}</span>
-                        </div>
-                        {selectedReservation.payment_method && (
-                          <div>
-                            <span className="font-semibold">Method:</span>{" "}
-                            <span>{selectedReservation.payment_method}</span>
-                          </div>
-                        )}
-                        {selectedReservation.payment_reference && (
-                          <div>
-                            <span className="font-semibold">Reference:</span>{" "}
-                            <span>{selectedReservation.payment_reference}</span>
-                          </div>
-                        )}
-                        {selectedReservation.payment_screenshot && (
-                          <div>
-                            <span className="font-semibold">Screenshot:</span>{" "}
-                            <a href={`/${selectedReservation.payment_screenshot}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View</a>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <Button
-                      variant="destructive"
-                      className="w-full"
-                      onClick={() => handleDelete(selectedReservation.id)}
-                    >
-                      Delete Reservation
-                    </Button>
-                  </div>
-                )}
-              </DialogContent>
-            </Dialog>
-
-            <Dialog open={isAddingReservation} onOpenChange={setIsAddingReservation}>
-              <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Create New Reservation</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-3 sm:space-y-4">
-                  <Input
-                    placeholder="Name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                  <Input
-                    placeholder="Phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <Input
-                      type="date"
-                      value={formData.date}
-                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    />
-                    <Input
-                      type="time"
-                      value={formData.time}
-                      onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                    />
-                  </div>
-                  <Input
-                    type="number"
-                    placeholder="Number of Guests"
-                    min="1"
-                    max="20"
-                    value={formData.guests}
-                    onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) })}
-                  />
-                  <Textarea
-                    placeholder="Special Requests (Optional)"
-                    value={formData.special_requests}
-                    onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
-                    rows={3}
-                  />
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value: ReservationStatus) =>
-                      setFormData({ ...formData, status: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="confirmed">Confirmed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button onClick={handleCreateReservation} className="w-full">
-                    Create Reservation
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border rounded-t-xl p-6 md:mb-8 bg-red-200">
+                <div className="flex items-center gap-2 sm:gap-4">
+                  <h2 className="text-xl sm:text-2xl font-bold">{formatMonthYear(currentDate)}</h2>
+                  <Button variant="outline" size="sm" onClick={goToToday}>
+                    Today
                   </Button>
                 </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Button variant="outline" size="icon" onClick={previousMonth}>
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <Button variant="outline" size="icon" onClick={nextMonth}>
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                  <Button onClick={() => setIsAddingReservation(true)} className="flex-1 sm:flex-none bg-red-800 text-white hover:bg-red-600">
+                    <Plus className="w-4 h-4 mr-2" />
+                    <span className="hidden sm:inline">New Reservation</span>
+                  </Button>
+                  <Button onClick={() => setIsWalkInGuest(true)} className="flex-1 sm:flex-none bg-red-800 text-white hover:bg-red-600">
+                    <Plus className="w-4 h-4 mr-2" />
+                    <span className="hidden sm:inline">Walk-In Guest</span>
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 sm:gap-2 mx-5">
+                {weekDays.map(day => (
+                  <div key={day} className="p-1 sm:p-2 text-center font-semibold text-xs sm:text-sm text-gray-600">
+                    <span className="hidden sm:inline">{day}</span>
+                    <span className="sm:hidden">{day.substring(0, 1)}</span>
+                  </div>
+                ))}
+
+                {days.map((date, index) => {
+                  const dayReservations = getReservationsForDate(date)
+
+                  return (
+                    <Card
+                      key={index}
+                      className={`min-h-[80px] sm:min-h-[100px] lg:min-h-[120px] ${!date ? 'invisible' : ''} ${isToday(date) ? 'ring-2 ring-blue-500' : ''
+                        }`}
+                    >
+                      <CardContent className="p-1 sm:p-2">
+                        {date && (
+                          <>
+                            <div className="text-xs sm:text-sm font-semibold mb-1 sm:mb-2 text-gray-700">
+                              {date.getDate()}
+                            </div>
+                            <div className="space-y-0.5 sm:space-y-1">
+                              {dayReservations.map(reservation => (
+                                <button
+                                  key={reservation.id}
+                                  onClick={() => setSelectedReservation(reservation)}
+                                  className="w-full text-left px-1 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs truncate transition-colors bg-green-100 hover:bg-green-200 text-green-800 font-medium"
+                                >
+                                  <span className="hidden sm:inline">{reservation.time.substring(0, 5)} - </span>
+                                  {reservation.status}
+                                </button>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+
+              {/* Reservation Details Dialog */}
+              <Dialog open={!!selectedReservation} onOpenChange={() => setSelectedReservation(null)}>
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl shadow-lg border border-gray-200 p-6 bg-white">
+                  <DialogHeader>
+                    <DialogTitle className="text-2xl font-bold text-gray-900 mb-4">Reservation Details</DialogTitle>
+                  </DialogHeader>
+
+                  {selectedReservation && (
+                    <div className="space-y-6">
+                      {/* Guest Info */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-gray-500">Name</label>
+                          <p className="text-base sm:text-lg font-semibold text-gray-900">{selectedReservation.name}</p>
+                        </div>
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-gray-500">Email</label>
+                          <p className="text-sm sm:text-base text-gray-700 break-all">{selectedReservation.email}</p>
+                        </div>
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-gray-500">Phone</label>
+                          <p className="text-sm sm:text-base text-gray-700">{selectedReservation.phone}</p>
+                        </div>
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-gray-500">Guests</label>
+                          <p className="text-sm sm:text-base text-gray-700">{selectedReservation.guests} people</p>
+                        </div>
+                      </div>
+
+                      {/* Date & Time */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-gray-500">Date</label>
+                          <p className="text-sm sm:text-base text-gray-700">{formatDate(selectedReservation.date)}</p>
+                        </div>
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-gray-500">Time</label>
+                          <p className="text-sm sm:text-base text-gray-700">{formatTime(selectedReservation.time)}</p>
+                        </div>
+                      </div>
+
+                      {/* Dining & Occasion */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-gray-500">Dining Preference</label>
+                          <p className="text-sm sm:text-base text-gray-700">{selectedReservation.dining_preference}</p>
+                        </div>
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-gray-500">Occasion Type</label>
+                          <p className="text-sm sm:text-base text-gray-700">{selectedReservation.occasion_type}</p>
+                        </div>
+                      </div>
+
+                      {/* Special Requests */}
+                      {selectedReservation.special_requests && (
+                        <div>
+                          <label className="text-xs sm:text-sm font-medium text-gray-500">Special Requests</label>
+                          <p className="text-sm sm:text-base text-gray-700">{selectedReservation.special_requests}</p>
+                        </div>
+                      )}
+
+                      {/* Status */}
+                      <div>
+                        <label className="text-xs sm:text-sm font-medium text-gray-500 mb-1 block">Status</label>
+                        <Select
+                          value={selectedReservation.status}
+                          onValueChange={(value: ReservationStatus) =>
+                            handleStatusChange(selectedReservation.id, value)
+                          }
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="confirmed">Confirmed</SelectItem>
+                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Payment Info */}
+                      <div className="border-t border-gray-200 pt-4 space-y-2">
+                        <h3 className="text-sm font-semibold text-gray-600">Payment Info</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-700">
+                          <div>
+                            <span className="font-medium">Status:</span>{" "}
+                            {selectedReservation.reservation_fee_paid ? "Paid" : "Unpaid"}
+                          </div>
+                          {selectedReservation.reservation_fee && (
+                            <div>
+                              <span className="font-medium">Fee:</span> ₱{selectedReservation.reservation_fee}
+                            </div>
+                          )}
+                          {selectedReservation.payment_method && (
+                            <div>
+                              <span className="font-medium">Method:</span> {selectedReservation.payment_method}
+                            </div>
+                          )}
+                          {selectedReservation.payment_reference && (
+                            <div>
+                              <span className="font-medium">Reference:</span> {selectedReservation.payment_reference}
+                            </div>
+                          )}
+                          {selectedReservation.payment_screenshot && (
+                            <div className="col-span-1 sm:col-span-2">
+                              <span className="font-medium">Screenshot:</span>{" "}
+                              <a
+                                href={`/${selectedReservation.payment_screenshot}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 underline"
+                              >
+                                View
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Delete Button */}
+                      <Button
+                        variant="destructive"
+                        className="w-full mt-4"
+                        onClick={() => handleDelete(selectedReservation.id)}
+                      >
+                        Delete Reservation
+                      </Button>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+
+              {/* New Reservation Dialog */}
+              <Dialog open={isAddingReservation} onOpenChange={setIsAddingReservation}>
+                <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Create New Reservation</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3 sm:space-y-4">
+                    <Input
+                      placeholder="Name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    />
+                    <Input
+                      type="email"
+                      placeholder="Email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Phone"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <Input
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                      />
+                      <Input
+                        type="time"
+                        value={formData.time}
+                        onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                      />
+                    </div>
+                    <Input
+                      type="number"
+                      placeholder="Number of Guests"
+                      min="1"
+                      max="20"
+                      value={formData.guests}
+                      onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) })}
+                    />
+                    <Select
+                      value={formData.dining_preference}
+                      onValueChange={(value: DiningPreference) =>
+                        setFormData({ ...formData, dining_preference: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Main Dining">Main Dining</SelectItem>
+                        <SelectItem value="Private Tatami Room">Private Tatami Room</SelectItem>
+                        <SelectItem value="Chef's Counter">Chef's Counter</SelectItem>
+                        <SelectItem value="Window Seating">Window Seating</SelectItem>
+                        <SelectItem value="Celebration Setup">Celebration Setup</SelectItem>
+                        <SelectItem value="Family Seating">Family Seating</SelectItem>
+                        <SelectItem value="Group Dining">Group Dining</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={formData.occasion_type}
+                      onValueChange={(value: OccasionType) =>
+                        setFormData({ ...formData, occasion_type: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Casual Dining">Casual Dining</SelectItem>
+                        <SelectItem value="Birthday">Birthday</SelectItem>
+                        <SelectItem value="Business Dinner">Business Dinner</SelectItem>
+                        <SelectItem value="Anniversary">Anniversary</SelectItem>                        
+                        <SelectItem value="Private Event">Private Event</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Textarea
+                      placeholder="Special Requests (Optional)"
+                      value={formData.special_requests}
+                      onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
+                      rows={3}
+                    />
+                    <Select
+                      value={formData.status}
+                      onValueChange={(value: ReservationStatus) =>
+                        setFormData({ ...formData, status: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="confirmed">Confirmed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button onClick={handleCreateReservation} className="w-full">
+                      Create Reservation
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* Walk In Dialog */}
+              <Dialog open={isWalkInGuest} onOpenChange={setIsWalkInGuest}>
+                <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Walk In Guest</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3 sm:space-y-4">
+                    <Input
+                      placeholder="Name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    />
+                    <Input
+                      type="email"
+                      placeholder="Email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Phone"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <Input
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                      />
+                      <Input
+                        type="time"
+                        value={formData.time}
+                        onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                      />
+                    </div>
+                    <Input
+                      type="number"
+                      placeholder="Number of Guests"
+                      min="1"
+                      max="20"
+                      value={formData.guests}
+                      onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) })}
+                    />
+                    <Select
+                      value={formData.dining_preference}
+                      onValueChange={(value: DiningPreference) =>
+                        setFormData({ ...formData, dining_preference: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Main Dining">Main Dining</SelectItem>
+                        <SelectItem value="Private Tatami Room">Private Tatami Room</SelectItem>
+                        <SelectItem value="Chef's Counter">Chef's Counter</SelectItem>
+                        <SelectItem value="Window Seating">Window Seating</SelectItem>
+                        <SelectItem value="Celebration Setup">Celebration Setup</SelectItem>
+                        <SelectItem value="Family Seating">Family Seating</SelectItem>
+                        <SelectItem value="Group Dining">Group Dining</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={formData.occasion_type}
+                      onValueChange={(value: OccasionType) =>
+                        setFormData({ ...formData, occasion_type: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Casual Dining">Casual Dining</SelectItem>
+                        <SelectItem value="Birthday">Birthday</SelectItem>
+                        <SelectItem value="Business Dinner">Business Dinner</SelectItem>
+                        <SelectItem value="Anniversary">Anniversary</SelectItem>                        
+                        <SelectItem value="Private Event">Private Event</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Textarea
+                      placeholder="Special Requests (Optional)"
+                      value={formData.special_requests}
+                      onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
+                      rows={3}
+                    />
+                    <Button onClick={handleCreateReservation} className="w-full">
+                      Add Walk-In Guest
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </main>
         </div>
       </div>
     </SidebarProvider>

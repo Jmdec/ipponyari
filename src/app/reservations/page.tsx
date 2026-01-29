@@ -764,7 +764,7 @@ export default function ReservationsPage() {
                       required
                       className="w-full pl-4 pr-4 py-3 border border-white/20 bg-white/10 backdrop-blur-sm rounded-xl focus:outline-none focus:border-white focus:ring-2 focus:ring-white/30 transition-all text-lg appearance-none text-white"
                     >
-                      {["Credit Card", "PayPal", "GCash", "Security Bank", "Other"].map((option) => (
+                      {["gcash", "bpi", "security_bank", "other"].map((option) => (
                         <option key={option} value={option} className="bg-red-200 text-gray-900">
                           {option}
                         </option>

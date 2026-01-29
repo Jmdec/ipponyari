@@ -24,7 +24,10 @@ import {
   User,
   Phone,
   MapPin,
+  SquarePen,
+  Icon,
 } from "lucide-react"
+import { Link as LinkIcon } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,7 +76,7 @@ interface Order {
   delivery_city: string
   delivery_zip_code: string
   payment_method: string
-  status: "pending" | "confirmed" | "preparing" | "ready" | "delivered" | "cancelled"
+  order_status: number | string
   subtotal: number
   delivery_fee: number
   total_amount: number
@@ -84,11 +87,42 @@ interface Order {
   updated_at: string
 }
 
+const StatusStatistics = ({
+  title,
+  order_status,
+  icon: Icon,
+}: {
+  title: string
+  order_status: number | string
+  icon: any
+}) => (
+  <Card className="group relative overflow-hidden border border-gray-200 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-sm">
+    <div className="absolute left-0 top-0 h-full w-[2px] bg-[#dc143c]/70" />
+
+    <CardContent className="px-5">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-md border border-red-100 text-gray-700">
+          <Icon className="h-6 w-6 text-red-900" />
+        </div>
+        <p className="text-lg font-bold uppercase tracking-wider text-red-900">
+          {title}
+        </p>
+      </div>
+
+      <div className="mt-4 flex items-center justify-center gap-2">
+        <p className="text-3xl font-extrabold text-gray-900">{order_status}</p>
+        <p className="text-sm text-gray-500">Orders</p>
+      </div>
+    </CardContent>
+  </Card>
+)
+
 const orderStatuses = [
   { value: "pending", label: "Pending", color: "bg-yellow-100 text-yellow-800", icon: Clock },
   { value: "confirmed", label: "Confirmed", color: "bg-blue-100 text-blue-800", icon: CheckCircle },
   { value: "preparing", label: "Preparing", color: "bg-orange-100 text-orange-800", icon: Package },
   { value: "ready", label: "Ready", color: "bg-green-100 text-green-800", icon: CheckCircle },
+  { value: "out_for_delivery", label: "Out for Delivery", color: "bg-purple-100 text-purple-800", icon: Truck },
   { value: "delivered", label: "Delivered", color: "bg-green-100 text-green-800", icon: Truck },
   { value: "cancelled", label: "Cancelled", color: "bg-red-100 text-red-800", icon: XCircle },
 ]
@@ -97,7 +131,8 @@ const paymentMethods = [
   { value: "cash", label: "Cash on Delivery" },
   { value: "gcash", label: "GCash" },
   { value: "paypal", label: "PayPal" },
-  { value: "bpi", label: "BPI Online" },
+  { value: "bpi", label: "BPI" },
+  { value: "security_bank", label: "Security Bank" },
   { value: "maya", label: "Maya" },
 ]
 
@@ -105,27 +140,27 @@ export default function OrdersAdminPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+
   const { toast } = useToast()
   const router = useRouter()
 
-  // DataTable states
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [globalFilter, setGlobalFilter] = useState("")
 
-  // Filter states
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>("all")
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({})
 
-  // State for mobile detection
-  const [isMobile, setIsMobile] = useState(false)
+  // State for desktop detection
+  const [isDesktop, setIsDesktop] = useState(false)
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth < 1024) // lg breakpoint
     }
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
+    checkDesktop()
+    window.addEventListener("resize", checkDesktop)
+    return () => window.removeEventListener("resize", checkDesktop)
   }, [])
 
   const [updatingStatus, setUpdatingStatus] = useState<number | null>(null)
@@ -152,13 +187,10 @@ export default function OrdersAdminPage() {
   // Helper function to get status badge
   const getStatusBadge = (status: string) => {
     const statusInfo = orderStatuses.find((s) => s.value === status)
-    if (!statusInfo) return null
 
-    const Icon = statusInfo.icon
     return (
-      <Badge className={`text-xs px-2 py-1 ${statusInfo.color}`}>
-        <Icon className="w-3 h-3 mr-1" />
-        {statusInfo.label}
+      <Badge variant="outline" className="text-xs">
+        {statusInfo?.label || status}
       </Badge>
     )
   }
@@ -203,6 +235,7 @@ export default function OrdersAdminPage() {
       })
 
       fetchOrders()
+
     } catch (error: any) {
       console.error("Error updating order status:", error)
       toast({
@@ -313,8 +346,29 @@ export default function OrdersAdminPage() {
     }
   }
 
+  const fetchOrderStatistics = async () => {
+    try {
+      const token = localStorage.getItem("auth_token")
+      if (!token) return
+
+      const res = await fetch("/api/orders/statistics", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "X-Admin-Request": "true",
+        },
+      })
+
+      if (!res.ok) throw new Error("Failed to fetch statistics")
+
+      const data = await res.json()
+    } catch (err) {
+      console.error("Stats error:", err)
+    }
+  }
+
   useEffect(() => {
     fetchOrders()
+    fetchOrderStatistics()
   }, [statusFilter, paymentMethodFilter])
 
   // Debounce search
@@ -334,7 +388,8 @@ export default function OrdersAdminPage() {
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          checked={table.getIsAllPageRowsSelected()}
+          indeterminate={table.getIsSomePageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
         />
@@ -348,6 +403,40 @@ export default function OrdersAdminPage() {
       ),
       enableSorting: false,
       enableHiding: false,
+    },
+
+    {
+      id: "update-status",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const order = row.original
+        return (
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Order Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+
+                {orderStatuses.map((status) => (
+                  <DropdownMenuItem
+                    key={status.value}
+                    onClick={() => handleStatusUpdate(order.id, status.value)}
+                    disabled={updatingStatus === order.id || order.order_status === status.value}
+                  >
+                    <status.icon className="mr-2 h-4 w-4" />
+                    Mark as {status.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )
+      },
     },
     {
       accessorKey: "order_number",
@@ -363,8 +452,7 @@ export default function OrdersAdminPage() {
       ),
       cell: ({ row }) => (
         <div className="min-w-0">
-          <div className="font-semibold text-gray-900 truncate">#{row.original.order_number}</div>
-          <div className="text-xs text-gray-500 sm:hidden truncate">{row.original.customer_name}</div>
+          <div className="font-semibold text-gray-900 truncate">{row.original.order_number}</div>
         </div>
       ),
     },
@@ -393,13 +481,14 @@ export default function OrdersAdminPage() {
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 h-auto font-normal"
+          className="p-0 h-auto font-normal hidden lg:flex"
         >
           Status
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) => getStatusBadge(row.original.status),
+      cell: ({ row }) =>
+        <div className="hidden lg:block">{getStatusBadge(row.original.order_status)}</div>
     },
     {
       accessorKey: "payment_method",
@@ -416,46 +505,24 @@ export default function OrdersAdminPage() {
       cell: ({ row }) => <div className="hidden lg:block">{getPaymentMethodBadge(row.original.payment_method)}</div>,
     },
     {
-      accessorKey: "total",
+      accessorKey: "total_amount",
       header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 h-auto font-normal"
-        >
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Total
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => (
-        <div className="font-semibold text-middle">₱{(row.original.total_amount || 0).toFixed(2)}</div>
+        <div className="font-semibold">₱{(row.original.total_amount ?? 0).toFixed(2)}</div>
       ),
     },
     {
-      accessorKey: "created_at",
+      accessorKey: "total_amount",
       header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="p-0 h-auto font-normal hidden lg:flex"
-        >
-          Created
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+        <Button variant="ghost">
+          Actions
         </Button>
       ),
-      cell: ({ row }) => (
-        <div className="text-sm hidden lg:block">
-          {new Date(row.original.created_at).toLocaleDateString("en-US", {
-            month: "short",
-            day: "2-digit",
-            year: "numeric",
-          })}
-        </div>
-      ),
-    },
-    {
-      id: "actions",
-      enableHiding: false,
       cell: ({ row }) => {
         const order = row.original
         return (
@@ -469,7 +536,6 @@ export default function OrdersAdminPage() {
                   className="h-8 w-8 p-0 sm:h-auto sm:w-auto sm:px-2"
                 >
                   <Eye className="h-4 w-4" />
-                  <span className="ml-1 sr-only sm:not-sr-only hidden sm:inline">View</span>
                 </Button>
               </SheetTrigger>
               <SheetContent className="w-full sm:max-w-3xl overflow-y-auto">
@@ -484,7 +550,7 @@ export default function OrdersAdminPage() {
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-4 bg-gray-50 rounded-lg">
                         <div>
                           <div className="flex items-center gap-3 mb-2">
-                            {getStatusBadge(selectedOrder.status)}
+                            {getStatusBadge(selectedOrder.order_status)}
                             {getPaymentMethodBadge(selectedOrder.payment_method)}
                           </div>
                           <p className="text-sm text-gray-600">
@@ -639,34 +705,14 @@ export default function OrdersAdminPage() {
               </SheetContent>
             </Sheet>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Order Actions</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-
-                {orderStatuses.map((status) => (
-                  <DropdownMenuItem
-                    key={status.value}
-                    onClick={() => handleStatusUpdate(order.id, status.value)}
-                    disabled={updatingStatus === order.id || order.status === status.value}
-                  >
-                    <status.icon className="mr-2 h-4 w-4" />
-                    Mark as {status.label}
-                  </DropdownMenuItem>
-                ))}
-
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push(`/admin/order/${order.id}/edit`)} className="text-red-600">
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit Order
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="border-l-2 pl-4">
+              <button
+                onClick={() => router.push(`/admin/order/${order.id}/edit`)}
+                className="text-red-600"
+              >
+                <SquarePen className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         )
       },
@@ -692,10 +738,10 @@ export default function OrdersAdminPage() {
 
   if (loading) {
     return (
-      <SidebarProvider defaultOpen={!isMobile}>
+      <SidebarProvider defaultOpen={!isDesktop}>
         <div className="flex min-h-screen w-full bg-gradient-to-br from-orange-50 to-red-50">
           <AppSidebar />
-          <div className={`flex-1 min-w-0 ${isMobile ? "ml-0" : "ml-72"}`}>
+          <div className={`flex-1 min-w-0 ${isDesktop ? "ml-0" : "ml-72"}`}>
             <div className="flex items-center justify-center min-h-screen w-full">
               <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-6 py-4 rounded-xl shadow-lg">
                 <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
@@ -709,30 +755,33 @@ export default function OrdersAdminPage() {
   }
 
   return (
-    <SidebarProvider defaultOpen={!isMobile}>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-orange-50 to-red-50">
+    <SidebarProvider defaultOpen={!isDesktop}>
+      <div className="flex min-h-screen w-full bg-gradient-to-br from-red-50 to-red-50">
         <AppSidebar />
-        <div className={`flex-1 min-w-0 ${isMobile ? "ml-0" : "ml-72"}`}>
-          {isMobile && (
-            <div className="sticky top-0 z-50 flex h-12 items-center gap-2 border-b bg-white/90 backdrop-blur-sm px-4 md:hidden shadow-sm">
+        <div className={`flex-1 min-w-0 ${isDesktop ? "ml-0" : "ml-72"}`}>
+          {isDesktop && (
+            <div className="sticky top-0 z-50 flex h-14 items-center gap-3 border-b bg-white px-4 shadow-sm">
               <SidebarTrigger className="-ml-1" />
-              <span className="text-sm font-semibold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                Orders
-              </span>
+              <Image
+                src="/logoippon.png"
+                alt="Ipponyari Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
+              <h1 className="text-lg font-bold text-gray-900">Ipponyari Japanese Restaurant</h1>
             </div>
           )}
+
           <main className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
             <div className="max-w-full space-y-4 sm:space-y-6">
               {/* Header */}
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-orange-100">
-                  <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                    Order Management
-                  </h1>
-                  <p className="text-sm sm:text-base text-gray-600 mt-1">
-                    Manage customer orders and track delivery status
-                  </p>
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Order Management</h1>
+                  <p className="text-gray-600 mt-1">Manage customer orders and track delivery status</p>
                 </div>
+
                 <div className="flex items-center gap-4 bg-white/70 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-orange-100">
                   <div className="flex items-center gap-2 text-sm">
                     <DollarSign className="w-5 h-5 text-green-500" />
@@ -744,33 +793,31 @@ export default function OrdersAdminPage() {
 
               {/* Stats Cards */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {orderStatuses.slice(0, 4).map((status) => {
-                  const count = orders.filter((order) => order.status === status.value).length
-                  const Icon = status.icon
-                  return (
-                    <Card
-                      key={status.value}
-                      className="p-4 bg-white/70 backdrop-blur-sm shadow-lg border border-orange-100 hover:shadow-xl transition-all duration-200"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-gray-600">{status.label}</p>
-                          <p className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                            {count}
-                          </p>
-                        </div>
-                        <div className="bg-gradient-to-r from-orange-100 to-red-100 p-2 rounded-lg">
-                          <Icon className="w-6 h-6 text-orange-600" />
-                        </div>
-                      </div>
-                    </Card>
-                  )
-                })}
+                <StatusStatistics
+                  title="Pending"
+                  order_status={statusCounts.pending ?? 0}
+                  icon={Clock}
+                />
+                <StatusStatistics
+                  title="Confirmed"
+                  order_status={statusCounts.confirmed ?? 0}
+                  icon={CheckCircle}
+                />
+                <StatusStatistics
+                  title="Preparing"
+                  order_status={statusCounts.preparing ?? 0}
+                  icon={Package}
+                />
+                <StatusStatistics
+                  title="Delivered"
+                  order_status={statusCounts.delivered ?? 0}
+                  icon={Truck}
+                />
               </div>
 
               {/* Filters and Search */}
-              <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-orange-100">
-                <CardHeader className="pb-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-t-lg">
+              <Card className="bg-white/70 backdrop-blur-sm shadow-xl p-0 pb-5 border-red-100">
+                <CardHeader className="p-3 bg-gradient-to-r from-red-500 to-red-500 text-white rounded-t-lg">
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
                       <div className="relative flex-1 max-w-sm">
@@ -819,6 +866,8 @@ export default function OrdersAdminPage() {
                   <div className="text-sm text-gray-600 mb-4 font-medium">
                     Showing {table.getFilteredRowModel().rows.length} of {orders.length} orders
                   </div>
+
+                  {/* Orders Table */}
                   <div className="w-full">
                     <div className="rounded-lg border border-orange-200 overflow-hidden shadow-lg">
                       <div className="overflow-x-auto">
@@ -873,6 +922,55 @@ export default function OrdersAdminPage() {
                         )}
                       </div>
                     )}
+
+                    {/*  
+
+                    {totalPages > 1 && (
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 pt-4 border-t border-red-200">
+                        <div className="text-sm text-gray-600">
+                          Page {currentPage} of {totalPages}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(1)}
+                            disabled={currentPage === 1}
+                            className="border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                          >
+                            First
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                            disabled={currentPage === 1}
+                            className="border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                          >
+                            Previous
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                            disabled={currentPage === totalPages}
+                            className="border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                          >
+                            Next
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(totalPages)}
+                            disabled={currentPage === totalPages}
+                            className="border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                          >
+                            Last
+                          </Button>
+                        </div>
+                      </div>
+                    
+                    )}*/}
                   </div>
                 </CardContent>
               </Card>
