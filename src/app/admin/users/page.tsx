@@ -2,7 +2,7 @@
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import type React from "react"
-
+import Image from "next/image"
 import { AppSidebar } from "@/components/app-sidebar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -138,15 +138,14 @@ export default function UsersAdminPage() {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [globalFilter, setGlobalFilter] = useState("")
 
-  // State for mobile detection
-  const [isMobile, setIsMobile] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(false)
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth < 1024)
     }
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
+    checkDesktop()
+    window.addEventListener("resize", checkDesktop)
+    return () => window.removeEventListener("resize", checkDesktop)
   }, [])
 
   // Fetch users
@@ -501,6 +500,12 @@ export default function UsersAdminPage() {
       ),
     },
     {
+      accessorKey: "actions",
+      header: ({ column }) => (
+        <div className="p-0 h-auto font-normal hidden lg:flex" >
+          Actions
+        </div>
+      ),
       id: "actions",
       enableHiding: false,
       cell: ({ row }) => {
@@ -637,10 +642,10 @@ export default function UsersAdminPage() {
 
   if (loading) {
     return (
-      <SidebarProvider defaultOpen={!isMobile}>
+      <SidebarProvider defaultOpen={!isDesktop}>
         <div className="flex min-h-screen w-full bg-gradient-to-br from-orange-50 to-red-50">
           <AppSidebar />
-          <div className={`flex-1 min-w-0 ${isMobile ? "ml-0" : "ml-72"}`}>
+          <div className={`flex-1 min-w-0 ${isDesktop ? "ml-0" : "ml-72"}`}>
             <div className="flex items-center justify-center min-h-screen w-full">
               <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-6 py-4 rounded-xl shadow-lg">
                 <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
@@ -654,28 +659,33 @@ export default function UsersAdminPage() {
   }
 
   return (
-    <SidebarProvider defaultOpen={!isMobile}>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-orange-50 to-red-50">
+    <SidebarProvider defaultOpen={!isDesktop}>
+      <div className="flex min-h-screen w-full bg-gradient-to-br from-red-50 to-red-50">
         <AppSidebar />
-        <div className={`flex-1 min-w-0 ${isMobile ? "ml-0" : "ml-72"}`}>
-          {isMobile && (
-            <div className="sticky top-0 z-50 flex h-12 items-center gap-2 border-b bg-white/90 backdrop-blur-sm px-4 md:hidden shadow-sm">
+        <div className={`flex-1 min-w-0 ${isDesktop ? "ml-0" : "ml-72"}`}>
+          {isDesktop && (
+            <div className="sticky top-0 z-50 flex h-14 items-center gap-3 border-b bg-white px-4 shadow-sm">
               <SidebarTrigger className="-ml-1" />
-              <span className="text-sm font-semibold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                Users
-              </span>
+              <Image
+                src="/logoippon.png"
+                alt="Ipponyari Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
+              <h1 className="text-lg font-bold text-gray-900">Ipponyari Japanese Restaurant</h1>
             </div>
           )}
+
           <main className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
             <div className="max-w-full space-y-4 sm:space-y-6">
               {/* Header */}
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-orange-100">
-                  <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                     Users
-                  </h1>
-                  <p className="text-sm sm:text-base text-gray-600 mt-1">Manage customer accounts and information</p>
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Customer Management</h1>
+                  <p className="text-gray-600 mt-1">Manage customer accounts and information</p>
                 </div>
+
                 <div className="flex items-center gap-4 bg-white/70 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-orange-100">
                   <div className="flex items-center gap-2 text-sm">
                     <UsersIcon className="w-5 h-5 text-orange-500" />
@@ -686,8 +696,8 @@ export default function UsersAdminPage() {
               </div>
 
               {/* Filters and Search */}
-              <Card className="bg-white/70 backdrop-blur-sm shadow-xl border-orange-100">
-                <CardHeader className="pb-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-t-lg">
+              <Card className="bg-white/70 backdrop-blur-sm shadow-xl p-0 pb-5 border-red-100">
+                <CardHeader className="p-3 bg-gradient-to-r from-red-500 to-red-500 text-white rounded-t-lg">
                   <div className="flex flex-col gap-4">
                     <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
                       <div className="relative flex-1 max-w-sm">

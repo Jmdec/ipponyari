@@ -2,15 +2,24 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { Trash2, Edit2, Plus, X } from "lucide-react"
+import { Trash2, Edit2, Plus, X, Search, Underline } from "lucide-react"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
-import { useIsMobile } from "@/hooks/use-mobile"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 interface BlogPost {
   id: number
@@ -23,12 +32,26 @@ interface BlogPost {
 }
 
 export default function BlogPostsAdmin() {
+  const { toast } = useToast()
+
   const [posts, setPosts] = useState<BlogPost[]>([])
   const [loading, setLoading] = useState(true)
-  const [isAdding, setIsAdding] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
-  const { toast } = useToast()
-  const isMobile = useIsMobile()
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [search, setSearch] = useState("")
+
+  const [isDesktop, setIsDesktop] = useState(false)
+  useEffect(() => {
+    const checkDesktop = () => setIsDesktop(window.innerWidth < 1024)
+    checkDesktop()
+    window.addEventListener("resize", checkDesktop)
+    return () => window.removeEventListener("resize", checkDesktop)
+  }, [])
+
+  const filteredPosts = posts.filter(a =>
+    a.title.toLowerCase().includes(search.toLowerCase()) ||
+    a.content.toLowerCase().includes(search.toLowerCase())
+  )
 
   const [formData, setFormData] = useState({
     title: "",
@@ -42,69 +65,47 @@ export default function BlogPostsAdmin() {
     fetchPosts()
   }, [])
 
+  async function fetchPosts() {
+    try {
+      const res = await fetch("/api/blog-posts")
+      const data = await res.json()
+      setPosts(data)
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to fetch blog posts",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
     try {
       const form = new FormData()
-      form.append("title", formData.title)
-      form.append("excerpt", formData.excerpt)
-      form.append("content", formData.content)
-      form.append("author", formData.author)
-      if (formData.image) {
-        form.append("image", formData.image)
-      }
+      Object.entries(formData).forEach(([k, v]) => v && form.append(k, v))
 
       const url = editingId ? `/api/blog-posts/${editingId}` : "/api/blog-posts"
       const method = editingId ? "PUT" : "POST"
 
-      const response = await fetch(url, {
-        method,
-        body: form,
-      })
-
-      if (!response.ok) throw new Error("Failed to save")
+      await fetch(url, { method, body: form })
 
       toast({
         title: "Success",
-        description: editingId ? "Blog post updated successfully" : "Blog post created successfully",
+        description: editingId ? "Post updated" : "Post created",
       })
 
       setFormData({ title: "", excerpt: "", content: "", author: "", image: null })
       setEditingId(null)
-      setIsAdding(false)
+      setIsDialogOpen(false)
       fetchPosts()
-    } catch (error) {
-      console.error("Error saving post:", error)
+    } catch {
       toast({
         title: "Error",
         description: "Failed to save blog post",
-        variant: "destructive",
-      })
-    }
-  }
-
-  async function handleDelete(id: number) {
-    if (!confirm("Are you sure you want to delete this post?")) return
-
-    try {
-      const response = await fetch(`/api/blog-posts/${id}`, {
-        method: "DELETE",
-      })
-
-      if (!response.ok) throw new Error("Failed to delete")
-
-      toast({
-        title: "Success",
-        description: "Blog post deleted successfully",
-      })
-
-      fetchPosts()
-    } catch (error) {
-      console.error("Error deleting post:", error)
-      toast({
-        title: "Error",
-        description: "Failed to delete blog post",
         variant: "destructive",
       })
     }
@@ -119,238 +120,158 @@ export default function BlogPostsAdmin() {
       image: null,
     })
     setEditingId(post.id)
-    setIsAdding(true)
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    setIsDialogOpen(true)
   }
 
-  async function fetchPosts() {
-    try {
-      setLoading(true)
-      const response = await fetch("/api/blog-posts")
-      if (!response.ok) throw new Error("Failed to fetch")
-      const data = await response.json()
-      setPosts(data)
-    } catch (error) {
-      console.error("Error fetching posts:", error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch blog posts",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
+  async function handleDelete(id: number) {
+    if (!confirm("Delete this post?")) return
+    await fetch(`/api/blog-posts/${id}`, { method: "DELETE" })
+    fetchPosts()
   }
 
   if (loading) {
     return (
-      <SidebarProvider defaultOpen={!isMobile}>
+      <SidebarProvider defaultOpen={!isDesktop}>
         <AppSidebar />
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading blog posts...</p>
-          </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin h-10 w-10 border-b-2 border-primary rounded-full" />
         </div>
       </SidebarProvider>
     )
   }
 
   return (
-    <SidebarProvider defaultOpen={!isMobile}>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-orange-50 to-red-50">
+    <SidebarProvider defaultOpen={!isDesktop}>
+      <div className="flex min-h-screen w-full bg-red-50">
         <AppSidebar />
-        <div className={`flex-1 min-w-0 ${isMobile ? "ml-0" : "ml-72"}`}>
-          <div className="flex items-center gap-2 p-4 border-b bg-background">
-            <SidebarTrigger />
-            <h1 className="text-lg font-semibold">Blog Posts</h1>
-          </div>
 
-          <div className="flex-1 overflow-auto">
-            <div className="p-6 md:p-8 max-w-5xl mx-auto">
+        <div className={`flex-1 min-w-0 ${isDesktop ? "ml-0" : "ml-72"}`}>
+          {isDesktop && (
+            <div className="sticky top-0 z-50 flex h-14 items-center gap-3 border-b bg-white px-4">
+              <SidebarTrigger />
+              <Image src="/logoippon.png" alt="Logo" width={40} height={40} />
+              <h1 className="font-bold">Ipponyari Japanese Restaurant</h1>
+            </div>
+          )}
+
+          <main className="p-4 md:p-6">
+            <div className="space-y-6 min-h-[300px]">
               {/* Header */}
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+              <div className="flex flex-col md:flex-row justify-between gap-4">
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-bold text-foreground">Blog Posts</h1>
-                  <p className="text-muted-foreground mt-1">Manage and create your blog content</p>
+                  <h1 className="text-3xl font-bold">Blog Management</h1>
+                  <p className="text-gray-600">Manage restaurant&apos;s kitchen blog posts</p>
                 </div>
-                <Button
-                  onClick={() => {
-                    setIsAdding(!isAdding)
-                    if (isAdding) {
-                      setFormData({ title: "", excerpt: "", content: "", author: "", image: null })
-                      setEditingId(null)
-                    }
-                  }}
-                  size="lg"
-                  className="w-full md:w-auto"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  {isAdding ? "Cancel" : "New Post"}
-                </Button>
-              </div>
 
-              {/* Form */}
-              {isAdding && (
-                <Card className="mb-8 border-2">
-                  <CardHeader className="border-b bg-muted/50">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-2xl">{editingId ? "Edit Post" : "Create New Post"}</CardTitle>
-                      <button
+                <div className="flex gap-4 items-center">
+                  {/* Add New Blog Post */}
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
                         onClick={() => {
-                          setIsAdding(false)
-                          setFormData({ title: "", excerpt: "", content: "", author: "", image: null })
                           setEditingId(null)
+                          setFormData({
+                            title: "",
+                            excerpt: "",
+                            content: "",
+                            author: "",
+                            image: null,
+                          })
                         }}
-                        className="text-muted-foreground hover:text-foreground"
                       >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-6">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                      <div className="grid md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-foreground">Title</label>
-                          <Input
-                            placeholder="Enter post title"
-                            value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            required
-                            className="h-10"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-foreground">Author</label>
-                          <Input
-                            placeholder="Enter author name"
-                            value={formData.author}
-                            onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                            required
-                            className="h-10"
-                          />
-                        </div>
-                      </div>
+                        <Plus className="w-4 h-4 mr-2" />
+                        New Post
+                      </Button>
+                    </DialogTrigger>
 
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground">Excerpt</label>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>
+                          {editingId ? "Edit Post" : "Create Post"}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={handleSubmit} className="space-y-4">
+                        <Input
+                          placeholder="Title"
+                          value={formData.title}
+                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                          required
+                        />
+                        <Input
+                          placeholder="Author"
+                          value={formData.author}
+                          onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                          required
+                        />
                         <Textarea
-                          placeholder="Short summary of your post (appears in previews)"
+                          placeholder="Excerpt"
                           value={formData.excerpt}
                           onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                          required
                           rows={3}
-                          className="resize-none"
+                          required
                         />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground">Content</label>
                         <Textarea
-                          placeholder="Full blog post content"
+                          placeholder="Content"
                           value={formData.content}
                           onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                          rows={6}
                           required
-                          rows={8}
-                          className="resize-none font-mono text-sm"
                         />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-foreground">Featured Image</label>
-                        <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center hover:border-muted-foreground/50 transition-colors cursor-pointer">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                image: e.target.files?.[0] || null,
-                              })
-                            }
-                            className="hidden"
-                            id="image-upload"
-                          />
-                          <label htmlFor="image-upload" className="cursor-pointer block">
-                            <p className="text-sm font-medium text-foreground">
-                              {formData.image ? formData.image.name : "Click to upload or drag and drop"}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">PNG, JPG, GIF up to 10MB</p>
-                          </label>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3 pt-4">
-                        <Button type="submit" size="lg" className="flex-1">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) =>
+                            setFormData({ ...formData, image: e.target.files?.[0] || null })
+                          }
+                        />
+                      </form>
+                      <DialogFooter>
+                        <Button type="submit">
                           {editingId ? "Update Post" : "Create Post"}
                         </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="lg"
-                          onClick={() => {
-                            setIsAdding(false)
-                            setFormData({ title: "", excerpt: "", content: "", author: "", image: null })
-                            setEditingId(null)
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
-              )}
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Search Bar */}
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-full">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-800" />
+                      <Input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search blog post..."
+                        className="pl-9 bg-gray-100"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* Posts List */}
-              <div className="space-y-4">
-                {posts.length === 0 ? (
-                  <Card className="border-dashed">
-                    <CardContent className="pt-12 pb-12 text-center">
-                      <p className="text-muted-foreground mb-4">No blog posts yet</p>
-                      <Button onClick={() => setIsAdding(true)}>Create your first post</Button>
+              <div className="space-y-4 grid grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                {posts.map((post) => (
+                  <Card key={post.id}>
+                    <CardContent className="flex-1 justify-between items-center p-4">
+                      <div className="flex justify-end gap-2 mb-3">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(post)}>
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleDelete(post.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold">{post.title}</h3>
+                        <p className="text-sm text-gray-500">Author: <u>{post.author}</u></p>
+                        <p className="text-md my-4 h-full">{post.excerpt}</p>
+                      </div>
                     </CardContent>
                   </Card>
-                ) : (
-                  posts.map((post) => (
-                    <Card key={post.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="pt-6">
-                        <div className="flex flex-col md:flex-row gap-6">
-                          {post.image_url && (
-                            <img
-                              src={`${process.env.NEXT_PUBLIC_API_URL}${post.image_url}`}
-                              alt={post.title}
-                              className="w-full md:w-32 h-32 object-cover rounded-lg flex-shrink-0"
-                              onError={(e) => {
-                                e.currentTarget.src = "/placeholder.svg"
-                              }}
-                            />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-lg text-foreground line-clamp-2">{post.title}</h3>
-                            <p className="text-sm text-muted-foreground mb-2">By {post.author}</p>
-                            <p className="text-sm text-foreground line-clamp-2 mb-3">{post.excerpt}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(post.created_at).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div className="flex gap-2 flex-shrink-0">
-                            <Button variant="outline" size="sm" onClick={() => handleEdit(post)}>
-                              <Edit2 className="w-4 h-4" />
-                            </Button>
-                            <Button variant="destructive" size="sm" onClick={() => handleDelete(post.id)}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
+                ))}
               </div>
             </div>
-          </div>
+          </main>
         </div>
       </div>
     </SidebarProvider>

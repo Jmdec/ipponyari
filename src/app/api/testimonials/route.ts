@@ -1,37 +1,29 @@
+import { NextResponse } from "next/server"
+
 export async function GET(request: Request) {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL
-    
-    if (!apiUrl) {
-      throw new Error("NEXT_PUBLIC_API_URL is not defined")
-    }
-    
+    if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL is not defined")
+
     const { searchParams } = new URL(request.url)
-    const status = searchParams.get('status')
-    
-    const backendUrl = status 
+    const status = searchParams.get("status")
+
+    const backendUrl = status
       ? `${apiUrl}/api/testimonials?status=${status}`
       : `${apiUrl}/api/testimonials`
-    
-    const response = await fetch(backendUrl, {  // ✅ Fixed
-      headers: {
-        "Content-Type": "application/json",
-      },
+
+    const response = await fetch(backendUrl, {
+      headers: { "Content-Type": "application/json" },
       cache: "no-store",
     })
-    
-    if (!response.ok) {
-      throw new Error(`Backend returned ${response.status}: ${response.statusText}`)  // ✅ Fixed
-    }
-    
+
+    if (!response.ok) throw new Error(`Backend returned ${response.status}`)
+
     const data = await response.json()
-    return Response.json(data)
+    return NextResponse.json(data)
   } catch (error) {
-    console.error("Testimonials API Error:", error)
-    return Response.json(
-      { error: "Failed to fetch testimonials" },
-      { status: 500 }
-    )
+    console.error("Testimonials GET Error:", error)
+    return NextResponse.json({ error: "Failed to fetch testimonials" }, { status: 500 })
   }
 }
 
@@ -39,100 +31,20 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const apiUrl = process.env.NEXT_PUBLIC_API_URL
-    
-    if (!apiUrl) {
-      throw new Error("NEXT_PUBLIC_API_URL is not defined")
-    }
-    
-    const response = await fetch(`${apiUrl}/api/testimonials`, {  // ✅ Fixed
+    if (!apiUrl) throw new Error("NEXT_PUBLIC_API_URL is not defined")
+
+    const response = await fetch(`${apiUrl}/api/testimonials`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     })
-    
-    if (!response.ok) {
-      throw new Error(`Backend returned ${response.status}: ${response.statusText}`)  // ✅ Fixed
-    }
-    
-    const data = await response.json()
-    return Response.json(data)
-  } catch (error) {
-    console.error("Testimonials Submit Error:", error)
-    return Response.json(
-      { error: "Failed to submit testimonial" },
-      { status: 500 }
-    )
-  }
-}
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const body = await request.json()
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL
-    const { id } = params
-    
-    if (!apiUrl) {
-      throw new Error("NEXT_PUBLIC_API_URL is not defined")
-    }
-    
-    const response = await fetch(`${apiUrl}/api/testimonials/${id}`, {  // ✅ Fixed
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    })
-    
-    if (!response.ok) {
-      throw new Error(`Backend returned ${response.status}: ${response.statusText}`)  // ✅ Fixed
-    }
-    
-    const data = await response.json()
-    return Response.json(data)
-  } catch (error) {
-    console.error("Testimonials Update Error:", error)
-    return Response.json(
-      { error: "Failed to update testimonial" },
-      { status: 500 }
-    )
-  }
-}
+    if (!response.ok) throw new Error(`Backend returned ${response.status}`)
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL
-    const { id } = params
-    
-    if (!apiUrl) {
-      throw new Error("NEXT_PUBLIC_API_URL is not defined")
-    }
-    
-    const response = await fetch(`${apiUrl}/api/testimonials/${id}`, {  // ✅ Fixed
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-    
-    if (!response.ok) {
-      throw new Error(`Backend returned ${response.status}: ${response.statusText}`)  // ✅ Fixed
-    }
-    
     const data = await response.json()
-    return Response.json(data)
+    return NextResponse.json(data)
   } catch (error) {
-    console.error("Testimonials Delete Error:", error)
-    return Response.json(
-      { error: "Failed to delete testimonial" },
-      { status: 500 }
-    )
+    console.error("Testimonials POST Error:", error)
+    return NextResponse.json({ error: "Failed to submit testimonial" }, { status: 500 })
   }
 }

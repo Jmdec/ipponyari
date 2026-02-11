@@ -30,7 +30,7 @@ interface AnalyticsData {
     totalCustomers: number
     overallRating: number
     totalReviews: number
-    growthRate: number
+    TotalCustomers: number
   }
   revenueData: Array<{ date: string; revenue: number; orders: number }>
   orderStatusData: Array<{ status: string; count: number; percentage: number }>
@@ -240,7 +240,7 @@ export default function AdminDashboard() {
               <MetricCard
                 title="Total Revenue"
                 value={`₱${(analytics.keyMetrics?.totalRevenue || 0).toLocaleString()}`}
-                change={`${analytics.keyMetrics?.growthRate || 0}%`}
+                change={`${analytics.keyMetrics?.TotalCustomers || 0}%`}
                 icon={DollarSign}
                 subtitle="Last 30 days"
                 trend="up"

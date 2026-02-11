@@ -21,18 +21,34 @@ interface Reservation {
   time: string
   guests: number
   special_requests?: string
-  status: "pending" | "confirmed" | "cancelled"
+  status: "Pending" | "Confirmed" | "Cancelled"
   created_at: string
   reservation_fee_paid: boolean
-  dining_preference: "main dining" | "private tatami roon" | "chef's counter" | "window seating" | "celebration setup" | "family seating" | "group dining"
-  occasion_type?: "casual dining" | "birthday" | "business dinner" | "anniversary" | "private event"
+  dining_preference: "Main Dining" | "Private Tatami Room" | "Chef's Counter" | "Window Seat" | "Celebration Area" | "Family Seating" | "Group Dining"
+  occasion_type?: "Casual Dinner" | "Birthday" | "Business Meeting" | "Anniversary" | "Private Event" | "Other"
   reservation_fee?: number
   payment_method?: string
   payment_reference?: string
   payment_screenshot?: string
+  is_walkin?: boolean
 }
 
-type ReservationStatus = "pending" | "confirmed" | "cancelled"
+function isSameMonth(dateStr: string, currentDate: Date) {
+  const d = new Date(dateStr)
+  return (
+    d.getFullYear() === currentDate.getFullYear() &&
+    d.getMonth() === currentDate.getMonth()
+  )
+}
+
+function getReservationColor(reservation: Reservation) {
+  if (reservation.is_walkin) {
+    return "bg-blue-100 text-blue-800 hover:bg-blue-200"
+  }
+  return "bg-green-100 text-green-800 hover:bg-green-200"
+}
+
+type ReservationStatus = "Pending" | "Confirmed" | "Cancelled"
 type DiningPreference = Reservation["dining_preference"]
 type OccasionType = Reservation["occasion_type"]
 
@@ -61,11 +77,13 @@ export default function ReservationsAdmin() {
     date: "",
     time: "",
     guests: 1,
-    dining_preference: "main dining" as Reservation["dining_preference"],
-    occasion_type: "casual dining" as Reservation["occasion_type"],
+    dining_preference: "Main Dining" as DiningPreference,
+    occasion_type: "Casual Dinner" as OccasionType,
     special_requests: "",
-    status: "pending" as ReservationStatus,
+    status: "Pending" as ReservationStatus,
+    is_walkin: false,
   })
+
 
   useEffect(() => {
     fetchReservations()
@@ -214,6 +232,21 @@ export default function ReservationsAdmin() {
 
       if (!response.ok) throw new Error("Failed to create reservation")
 
+      // Only send email if it's not a walk-in
+      if (!formData.is_walkin && formData.email) {
+        await fetch("/api/send-reservation-email", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            email: formData.email,
+            name: formData.name,
+            date: formData.date,
+            time: formData.time,
+            guests: formData.guests,
+          }),
+        })
+      }
+
       setFormData({
         name: "",
         email: "",
@@ -222,9 +255,10 @@ export default function ReservationsAdmin() {
         time: "",
         guests: 1,
         special_requests: "",
-        status: "pending",
-        dining_preference: "main dining",
-        occasion_type: "casual dining",
+        status: "Pending",
+        dining_preference: "Main Dining",
+        occasion_type: "Casual Dinner",
+        is_walkin: false,
       })
       setIsAddingReservation(false)
       fetchReservations()
@@ -235,13 +269,19 @@ export default function ReservationsAdmin() {
 
   async function handleWalkInGuest() {
     try {
+      const payload = {
+        ...formData,
+        is_walkin: true,
+        status: "Confirmed",
+      }
+
       const response = await fetch("/api/reservations", {
         method: "POST",
         headers: getAuthHeaders(),
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
 
-      if (!response.ok) throw new Error("Failed to create reservation")
+      if (!response.ok) throw new Error("Failed to create walk-in")
 
       setFormData({
         name: "",
@@ -250,17 +290,20 @@ export default function ReservationsAdmin() {
         date: "",
         time: "",
         guests: 1,
+        dining_preference: "Main Dining",
+        occasion_type: "Casual Dinner",
         special_requests: "",
-        status: "pending",
-        dining_preference: "main dining",
-        occasion_type: "casual dining",
+        status: "Pending",
+        is_walkin: false,
       })
+
       setIsWalkInGuest(false)
       fetchReservations()
     } catch (error) {
-      console.error("Error creating reservation:", error)
+      console.error("Walk-in error:", error)
     }
   }
+
 
   async function handleDelete(id: number) {
     if (!confirm("Are you sure you want to delete this reservation?")) return
@@ -306,6 +349,24 @@ export default function ReservationsAdmin() {
     return <div className="p-8">Loading...</div>
   }
 
+  const reservationCustomerCount = reservations
+    .filter(
+      r =>
+        !r.is_walkin &&
+        r.status !== "Cancelled" &&
+        isSameMonth(r.date, currentDate)
+    )
+    .reduce((sum, r) => sum + r.guests, 0)
+
+  const walkInCustomerCount = reservations
+    .filter(
+      r =>
+        r.is_walkin &&
+        r.status !== "Cancelled" &&
+        isSameMonth(r.date, currentDate)
+    )
+    .reduce((sum, r) => sum + r.guests, 0)
+
   return (
     <SidebarProvider defaultOpen={!isDesktop}>
       <div className="flex min-h-screen w-full bg-gradient-to-br from-red-50 to-red-50">
@@ -327,10 +388,38 @@ export default function ReservationsAdmin() {
 
           <main className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
             {/* Header */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              {/* Left: Title */}
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Reservation Management</h1>
-                <p className="text-gray-600 mt-1">Manage your restaurant&apos;s reservations</p>
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+                  Reservation Management
+                </h1>
+                <p className="text-gray-600 mt-1">
+                  Manage your restaurant&apos;s reservations and walk-in guests
+                </p>
+              </div>
+
+              {/* Right: Monthly Guest Counts */}
+              <div className="flex flex-wrap items-center gap-6 text-sm bg-white/80 backdrop-blur-sm px-4 py-2 rounded-lg border shadow-sm">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                  <span className="text-gray-700">
+                    Reservation:{" "}
+                    <span className="font-semibold text-green-800">
+                      {reservationCustomerCount}
+                    </span>
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-blue-500"></span>
+                  <span className="text-gray-700">
+                    Walk-In:{" "}
+                    <span className="font-semibold text-blue-800">
+                      {walkInCustomerCount}
+                    </span>
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -343,6 +432,8 @@ export default function ReservationsAdmin() {
                     Today
                   </Button>
                 </div>
+
+                {/* Navigation, New Reservation & Walk-In Guest */}
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <Button variant="outline" size="icon" onClick={previousMonth}>
                     <ChevronLeft className="w-4 h-4" />
@@ -389,7 +480,7 @@ export default function ReservationsAdmin() {
                                 <button
                                   key={reservation.id}
                                   onClick={() => setSelectedReservation(reservation)}
-                                  className="w-full text-left px-1 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs truncate transition-colors bg-green-100 hover:bg-green-200 text-green-800 font-medium"
+                                  className={`w-full text-left px-1 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs truncate transition-colors font-medium ${getReservationColor(reservation)}`}
                                 >
                                   <span className="hidden sm:inline">{reservation.time.substring(0, 5)} - </span>
                                   {reservation.status}
@@ -475,12 +566,14 @@ export default function ReservationsAdmin() {
                           }
                         >
                           <SelectTrigger className="w-full">
-                            <SelectValue />
+                            <SelectValue>
+                              {selectedReservation.status ? selectedReservation.status : "Select Status"}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="confirmed">Confirmed</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
+                            <SelectItem value="Pending">Pending</SelectItem>
+                            <SelectItem value="Confirmed">Confirmed</SelectItem>
+                            <SelectItem value="Cancelled">Cancelled</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -539,199 +632,339 @@ export default function ReservationsAdmin() {
 
               {/* New Reservation Dialog */}
               <Dialog open={isAddingReservation} onOpenChange={setIsAddingReservation}>
-                <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Create New Reservation</DialogTitle>
+                <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl">
+                  <DialogHeader className="pb-2 border-b">
+                    <DialogTitle className="text-xl font-semibold text-gray-900">
+                      Create New Reservation
+                    </DialogTitle>
+                    <p className="text-sm text-gray-500">
+                      Add a reservation manually for a guest
+                    </p>
                   </DialogHeader>
-                  <div className="space-y-3 sm:space-y-4">
-                    <Input
-                      placeholder="Name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    />
-                    <Input
-                      type="email"
-                      placeholder="Email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    />
-                    <Input
-                      placeholder="Phone"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+
+                  <div className="space-y-5 pt-4">
+                    {/* Guest Information */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-gray-700">
+                        Guest Information
+                      </h4>
+
                       <Input
-                        type="date"
-                        value={formData.date}
-                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        placeholder="Full Name"
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
                       />
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Input
+                          type="email"
+                          placeholder="Email Address"
+                          value={formData.email}
+                          onChange={(e) =>
+                            setFormData({ ...formData, email: e.target.value })
+                          }
+                        />
+                        <Input
+                          placeholder="Phone Number"
+                          value={formData.phone}
+                          onChange={(e) =>
+                            setFormData({ ...formData, phone: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {/* Reservation Details */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-gray-700">
+                        Reservation Details
+                      </h4>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Input
+                          type="date"
+                          value={formData.date}
+                          onChange={(e) =>
+                            setFormData({ ...formData, date: e.target.value })
+                          }
+                        />
+                        <Input
+                          type="time"
+                          value={formData.time}
+                          onChange={(e) =>
+                            setFormData({ ...formData, time: e.target.value })
+                          }
+                        />
+                      </div>
+
                       <Input
-                        type="time"
-                        value={formData.time}
-                        onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                        type="number"
+                        min={1}
+                        max={20}
+                        placeholder="Number of Guests"
+                        value={formData.guests}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            guests: Number(e.target.value),
+                          })
+                        }
                       />
                     </div>
-                    <Input
-                      type="number"
-                      placeholder="Number of Guests"
-                      min="1"
-                      max="20"
-                      value={formData.guests}
-                      onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) })}
-                    />
-                    <Select
-                      value={formData.dining_preference}
-                      onValueChange={(value: DiningPreference) =>
-                        setFormData({ ...formData, dining_preference: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Main Dining">Main Dining</SelectItem>
-                        <SelectItem value="Private Tatami Room">Private Tatami Room</SelectItem>
-                        <SelectItem value="Chef's Counter">Chef's Counter</SelectItem>
-                        <SelectItem value="Window Seating">Window Seating</SelectItem>
-                        <SelectItem value="Celebration Setup">Celebration Setup</SelectItem>
-                        <SelectItem value="Family Seating">Family Seating</SelectItem>
-                        <SelectItem value="Group Dining">Group Dining</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select
-                      value={formData.occasion_type}
-                      onValueChange={(value: OccasionType) =>
-                        setFormData({ ...formData, occasion_type: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Casual Dining">Casual Dining</SelectItem>
-                        <SelectItem value="Birthday">Birthday</SelectItem>
-                        <SelectItem value="Business Dinner">Business Dinner</SelectItem>
-                        <SelectItem value="Anniversary">Anniversary</SelectItem>                        
-                        <SelectItem value="Private Event">Private Event</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Textarea
-                      placeholder="Special Requests (Optional)"
-                      value={formData.special_requests}
-                      onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
-                      rows={3}
-                    />
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value: ReservationStatus) =>
-                        setFormData({ ...formData, status: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="confirmed">Confirmed</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button onClick={handleCreateReservation} className="w-full">
-                      Create Reservation
-                    </Button>
+
+                    {/* Preferences */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-gray-700">
+                        Preferences
+                      </h4>
+
+                      <Select
+                        value={formData.dining_preference}
+                        onValueChange={(value: DiningPreference) =>
+                          setFormData({ ...formData, dining_preference: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Dining Preference" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Main Dining">Main Dining</SelectItem>
+                          <SelectItem value="Private Tatami Room">Private Tatami Room</SelectItem>
+                          <SelectItem value="Chef's Counter">Chef&apos;s Counter</SelectItem>
+                          <SelectItem value="Window Seat">Window Seat</SelectItem>
+                          <SelectItem value="Celebration Area">Celebration Area</SelectItem>
+                          <SelectItem value="Family Seating">Family Seating</SelectItem>
+                          <SelectItem value="Group Dining">Group Dining</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Select
+                        value={formData.occasion_type}
+                        onValueChange={(value: OccasionType) =>
+                          setFormData({ ...formData, occasion_type: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Occasion Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Casual Dinner">Casual Dinner</SelectItem>
+                          <SelectItem value="Birthday">Birthday</SelectItem>
+                          <SelectItem value="Business Meeting">Business Meeting</SelectItem>
+                          <SelectItem value="Anniversary">Anniversary</SelectItem>
+                          <SelectItem value="Private Event">Private Event</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Special Requests */}
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold text-gray-700">
+                        Special Requests
+                      </h4>
+                      <Textarea
+                        placeholder="Optional notes or special requests"
+                        rows={3}
+                        value={formData.special_requests}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            special_requests: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                    {/* Status */}
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold text-gray-700">
+                        Reservation Status
+                      </h4>
+
+                      <Select
+                        value={formData.status}
+                        onValueChange={(value: ReservationStatus) =>
+                          setFormData({ ...formData, status: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Pending">Pending</SelectItem>
+                          <SelectItem value="Confirmed">Confirmed</SelectItem>
+                          <SelectItem value="Cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Action */}
+                    <div className="pt-2">
+                      <Button
+                        onClick={handleCreateReservation}
+                        className="w-full rounded-xl bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        Create Reservation
+                      </Button>
+                    </div>
                   </div>
                 </DialogContent>
               </Dialog>
 
               {/* Walk In Dialog */}
               <Dialog open={isWalkInGuest} onOpenChange={setIsWalkInGuest}>
-                <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Walk In Guest</DialogTitle>
+                <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl">
+                  <DialogHeader className="pb-2 border-b">
+                    <DialogTitle className="text-xl font-semibold text-gray-900">
+                      Walk-In Guest
+                    </DialogTitle>
+                    <p className="text-sm text-gray-500">
+                      Add a guest who arrived without a prior reservation
+                    </p>
                   </DialogHeader>
-                  <div className="space-y-3 sm:space-y-4">
-                    <Input
-                      placeholder="Name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    />
-                    <Input
-                      type="email"
-                      placeholder="Email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    />
-                    <Input
-                      placeholder="Phone"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    />
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+
+                  <div className="space-y-5 pt-4">
+                    {/* Personal Info */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-gray-700">Guest Information</h4>
+
                       <Input
-                        type="date"
-                        value={formData.date}
-                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        placeholder="Full Name"
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
                       />
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Input
+                          type="email"
+                          placeholder="Email Address"
+                          value={formData.email}
+                          onChange={(e) =>
+                            setFormData({ ...formData, email: e.target.value })
+                          }
+                        />
+                        <Input
+                          placeholder="Phone Number"
+                          value={formData.phone}
+                          onChange={(e) =>
+                            setFormData({ ...formData, phone: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {/* Visit Details */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-gray-700">Visit Details</h4>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Input
+                          type="date"
+                          value={formData.date}
+                          onChange={(e) =>
+                            setFormData({ ...formData, date: e.target.value })
+                          }
+                        />
+                        <Input
+                          type="time"
+                          value={formData.time}
+                          onChange={(e) =>
+                            setFormData({ ...formData, time: e.target.value })
+                          }
+                        />
+                      </div>
+
                       <Input
-                        type="time"
-                        value={formData.time}
-                        onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                        type="number"
+                        min={1}
+                        max={20}
+                        placeholder="Number of Guests"
+                        value={formData.guests}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            guests: Number(e.target.value),
+                          })
+                        }
                       />
                     </div>
-                    <Input
-                      type="number"
-                      placeholder="Number of Guests"
-                      min="1"
-                      max="20"
-                      value={formData.guests}
-                      onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) })}
-                    />
-                    <Select
-                      value={formData.dining_preference}
-                      onValueChange={(value: DiningPreference) =>
-                        setFormData({ ...formData, dining_preference: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Main Dining">Main Dining</SelectItem>
-                        <SelectItem value="Private Tatami Room">Private Tatami Room</SelectItem>
-                        <SelectItem value="Chef's Counter">Chef's Counter</SelectItem>
-                        <SelectItem value="Window Seating">Window Seating</SelectItem>
-                        <SelectItem value="Celebration Setup">Celebration Setup</SelectItem>
-                        <SelectItem value="Family Seating">Family Seating</SelectItem>
-                        <SelectItem value="Group Dining">Group Dining</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select
-                      value={formData.occasion_type}
-                      onValueChange={(value: OccasionType) =>
-                        setFormData({ ...formData, occasion_type: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Casual Dining">Casual Dining</SelectItem>
-                        <SelectItem value="Birthday">Birthday</SelectItem>
-                        <SelectItem value="Business Dinner">Business Dinner</SelectItem>
-                        <SelectItem value="Anniversary">Anniversary</SelectItem>                        
-                        <SelectItem value="Private Event">Private Event</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Textarea
-                      placeholder="Special Requests (Optional)"
-                      value={formData.special_requests}
-                      onChange={(e) => setFormData({ ...formData, special_requests: e.target.value })}
-                      rows={3}
-                    />
-                    <Button onClick={handleCreateReservation} className="w-full">
-                      Add Walk-In Guest
-                    </Button>
+
+                    {/* Preferences */}
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-semibold text-gray-700">Preferences</h4>
+
+                      <Select
+                        value={formData.dining_preference}
+                        onValueChange={(value: DiningPreference) =>
+                          setFormData({ ...formData, dining_preference: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Dining Preference" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Main Dining">Main Dining</SelectItem>
+                          <SelectItem value="Private Tatami Room">Private Tatami Room</SelectItem>
+                          <SelectItem value="Chef's Counter">Chef&apos;s Counter</SelectItem>
+                          <SelectItem value="Window Seat">Window Seat</SelectItem>
+                          <SelectItem value="Celebration Setup">Celebration Setup</SelectItem>
+                          <SelectItem value="Family Seating">Family Seating</SelectItem>
+                          <SelectItem value="Group Dining">Group Dining</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Select
+                        value={formData.occasion_type}
+                        onValueChange={(value: OccasionType) =>
+                          setFormData({ ...formData, occasion_type: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Occasion Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Casual Dinner">Casual Dinner</SelectItem>
+                          <SelectItem value="Birthday">Birthday</SelectItem>
+                          <SelectItem value="Business Meeting">Business Meeting</SelectItem>
+                          <SelectItem value="Anniversary">Anniversary</SelectItem>
+                          <SelectItem value="Private Event">Private Event</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Special Requests */}
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold text-gray-700">
+                        Special Requests
+                      </h4>
+                      <Textarea
+                        placeholder="Optional notes or requests"
+                        rows={3}
+                        value={formData.special_requests}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            special_requests: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+
+                    {/* Action */}
+                    <div className="pt-2">
+                      <Button
+                        onClick={handleWalkInGuest}
+                        className="w-full rounded-xl bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        Add Walk-In Guest
+                      </Button>
+                    </div>
                   </div>
                 </DialogContent>
               </Dialog>

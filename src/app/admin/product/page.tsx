@@ -501,7 +501,7 @@ export default function ProductsAdminPage() {
       },
     },
     {
-      id: "actions",
+      id: "delete",
       enableHiding: false,
       cell: ({ row }) => {
         const product = row.original
@@ -510,7 +510,8 @@ export default function ProductsAdminPage() {
             {/* Edit/Delete */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" /></Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>

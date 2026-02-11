@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import Image from "next/image"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,10 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { Trash2, Edit2, Plus, ChevronLeft, ChevronRight } from "lucide-react"
+import { Trash2, X, Edit2, Search, Plus, ChevronLeft, ChevronRight, MoreHorizontal, CheckCheckIcon } from "lucide-react"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
-import { useIsMobile } from "@/hooks/use-mobile"
 
 interface Testimonial {
   id: number
@@ -23,6 +23,12 @@ interface Testimonial {
   created_at: string
 }
 
+const testimonialStatus = [
+  { value: "Pending", label: "Pending" },
+  { value: "Approved", label: "Approved" },
+  { value: "Rejected", label: "Rejected" },
+]
+
 const ITEMS_PER_PAGE = 10
 
 export default function TestimonialsAdmin() {
@@ -33,13 +39,21 @@ export default function TestimonialsAdmin() {
   const [currentPage, setCurrentPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState("")
   const { toast } = useToast()
-  const isMobile = useIsMobile()
+  const [overallRating, setOverallRating] = useState<number>(0)
+  const [rowStatuses, setRowStatuses] = useState<Record<number, Testimonial["status"]>>({})
+  const [ratingCount, setRatingCount] = useState<number>(0)
+
+  const [isDesktop, setIsDesktop] = useState(false)
+  useEffect(() => {
+    const checkDesktop = () => {
+      setIsDesktop(window.innerWidth < 1024) // lg breakpoint
+    }
+    checkDesktop()
+    window.addEventListener("resize", checkDesktop)
+    return () => window.removeEventListener("resize", checkDesktop)
+  }, [])
 
   const [formData, setFormData] = useState({
-    client_name: "",
-    client_email: "",
-    rating: 5,
-    message: "",
     status: "pending" as "pending" | "approved" | "rejected",
   })
 
@@ -47,48 +61,13 @@ export default function TestimonialsAdmin() {
     fetchTestimonials()
   }, [])
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-
-    try {
-      const url = editingId ? `/api/testimonials/${editingId}` : "/api/testimonials"
-      const method = editingId ? "PUT" : "POST"
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      })
-
-      if (!response.ok) throw new Error("Failed to save")
-
-      toast({
-        title: "Success",
-        description: editingId ? "Testimonial updated successfully" : "Testimonial created successfully",
-      })
-
-      setFormData({
-        client_name: "",
-        client_email: "",
-        rating: 5,
-        message: "",
-        status: "pending",
-      })
-      setEditingId(null)
-      setIsAdding(false)
-      setCurrentPage(1)
-      fetchTestimonials()
-    } catch (error) {
-      console.error("Error saving testimonial:", error)
-      toast({
-        title: "Error",
-        description: "Failed to save testimonial",
-        variant: "destructive",
-      })
-    }
-  }
+  useEffect(() => {
+    const initialStatuses: Record<number, Testimonial["status"]> = {}
+    testimonials.forEach((t) => {
+      initialStatuses[t.id] = t.status
+    })
+    setRowStatuses(initialStatuses)
+  }, [testimonials])
 
   async function handleDelete(id: number) {
     if (!confirm("Are you sure you want to delete this testimonial?")) return
@@ -116,19 +95,6 @@ export default function TestimonialsAdmin() {
     }
   }
 
-  function handleEdit(testimonial: Testimonial) {
-    setFormData({
-      client_name: testimonial.client_name,
-      client_email: testimonial.client_email,
-      rating: testimonial.rating,
-      message: testimonial.message,
-      status: testimonial.status,
-    })
-    setEditingId(testimonial.id)
-    setIsAdding(true)
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }
-
   async function fetchTestimonials() {
     try {
       setLoading(true)
@@ -147,6 +113,24 @@ export default function TestimonialsAdmin() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (testimonials.length === 0) {
+      setOverallRating(0)
+      setRatingCount(0)
+      return
+    }
+
+    const totalRating = testimonials.reduce(
+      (sum, testimonial) => sum + testimonial.rating,
+      0
+    )
+
+    const average = totalRating / testimonials.length
+
+    setOverallRating(Number(average.toFixed(1)))
+    setRatingCount(testimonials.length)
+  }, [testimonials])
 
   // Filter testimonials based on search term
   const filteredTestimonials = testimonials.filter(
@@ -171,124 +155,70 @@ export default function TestimonialsAdmin() {
   }
 
   return (
-    <SidebarProvider defaultOpen={!isMobile}>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-orange-50 to-red-50">
+    <SidebarProvider defaultOpen={!isDesktop}>
+      <div className="flex min-h-screen w-full bg-gradient-to-br from-red-50 to-red-50">
         <AppSidebar />
-        <div className={`flex-1 min-w-0 ${isMobile ? "ml-0" : "ml-72"}`}>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 p-4 border-b">
-              <SidebarTrigger />
-              <h1 className="text-lg font-semibold">Testimonials</h1>
+        <div className={`flex-1 min-w-0 ${isDesktop ? "ml-0" : "ml-72"}`}>
+          {isDesktop && (
+            <div className="sticky top-0 z-50 flex h-14 items-center gap-3 border-b bg-white px-4 shadow-sm">
+              <SidebarTrigger className="-ml-1" />
+              <Image
+                src="/logoippon.png"
+                alt="Ipponyari Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
+              <h1 className="text-lg font-bold text-gray-900">Ipponyari Japanese Restaurant</h1>
             </div>
-            <div className="p-8 max-w-7xl mx-auto">
-              <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold">Testimonials Management</h1>
-                <Button
-                  onClick={() => {
-                    setIsAdding(!isAdding)
-                    if (isAdding) {
-                      setFormData({
-                        client_name: "",
-                        client_email: "",
-                        rating: 5,
-                        message: "",
-                        status: "pending",
-                      })
-                      setEditingId(null)
-                    }
-                  }}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  {isAdding ? "Cancel" : "Add Testimonial"}
-                </Button>
-              </div>
+          )}
 
-              {isAdding && (
-                <Card className="mb-8">
-                  <CardHeader>
-                    <CardTitle>{editingId ? "Edit Testimonial" : "Create New Testimonial"}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      <Input
-                        placeholder="Client Name"
-                        value={formData.client_name}
-                        onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
-                        required
-                      />
-                      <Input
-                        type="email"
-                        placeholder="Client Email"
-                        value={formData.client_email}
-                        onChange={(e) => setFormData({ ...formData, client_email: e.target.value })}
-                        required
-                      />
-                      <div className="flex gap-4">
-                        <div className="flex-1">
-                          <label className="text-sm font-medium">Rating</label>
-                          <Select
-                            value={formData.rating.toString()}
-                            onValueChange={(value) => setFormData({ ...formData, rating: Number.parseInt(value) })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {[1, 2, 3, 4, 5].map((num) => (
-                                <SelectItem key={num} value={num.toString()}>
-                                  {num} Stars
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex-1">
-                          <label className="text-sm font-medium">Status</label>
-                          <Select
-                            value={formData.status}
-                            onValueChange={(value: any) => setFormData({ ...formData, status: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="approved">Approved</SelectItem>
-                              <SelectItem value="rejected">Rejected</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
+          <main className="p-8 max-w-7xl mx-auto">
+            <div className="max-w-full space-y-4 sm:space-y-6">
+              {/* Header */}
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Testimonials Management</h1>
+                  <p className="text-gray-600 mt-1">Manage what says about your restaurant</p>
+                </div>
+
+                <div>
+                  <Card className="p-4">
+                    <CardContent>
+                      <div>
+                        <p className="text-lg font-semibold">Overall Rating</p>
+                        <h2 className="text-3xl font-bold text-yellow-500 flex items-center gap-2">
+                          {overallRating}
+                          <span className="text-xl">
+                            {"★".repeat(Math.round(overallRating))}
+                          </span>
+                        </h2>
                       </div>
-                      <Textarea
-                        placeholder="Message"
-                        value={formData.message}
-                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        required
-                        rows={4}
-                      />
-                      <Button type="submit" className="w-full">
-                        {editingId ? "Update Testimonial" : "Create Testimonial"}
-                      </Button>
-                    </form>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Search Bar */}
-              <div className="mb-6">
-                <Input
-                  placeholder="Search by name, email, or message..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value)
-                    setCurrentPage(1)
-                  }}
-                />
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
 
-              {/* Data Table */}
-              <Card>
-                <CardContent className="pt-6">
+              <Card className="bg-white/70 backdrop-blur-sm shadow-xl p-0 pb-5 border-red-100">
+                <CardHeader className="p-3 bg-gradient-to-r from-red-500 to-red-500 text-white rounded-t-lg">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+                      <div className="relative flex-1 max-w-sm">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-red-800" />
+                        <Input
+                          placeholder="Search by name, email, or message..."
+                          value={searchTerm}
+                          onChange={(e) => {
+                            setSearchTerm(e.target.value)
+                            setCurrentPage(1)
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent>
                   {loading ? (
                     <div className="text-center py-8">Loading testimonials...</div>
                   ) : paginatedTestimonials.length === 0 ? (
@@ -305,7 +235,6 @@ export default function TestimonialsAdmin() {
                               <th className="text-left py-3 px-4 font-semibold">Email</th>
                               <th className="text-left py-3 px-4 font-semibold">Rating</th>
                               <th className="text-left py-3 px-4 font-semibold">Message</th>
-                              <th className="text-left py-3 px-4 font-semibold">Status</th>
                               <th className="text-left py-3 px-4 font-semibold">Date</th>
                               <th className="text-left py-3 px-4 font-semibold">Actions</th>
                             </tr>
@@ -319,31 +248,65 @@ export default function TestimonialsAdmin() {
                                   <span className="text-yellow-500">{"★".repeat(testimonial.rating)}</span>
                                 </td>
                                 <td className="py-3 px-4 text-gray-700 max-w-xs truncate">{testimonial.message}</td>
-                                <td className="py-3 px-4">
-                                  <span
-                                    className={`inline-block px-2 py-1 text-xs rounded font-medium ${testimonial.status === "approved"
-                                      ? "bg-green-100 text-green-800"
-                                      : testimonial.status === "rejected"
-                                        ? "bg-red-100 text-red-800"
-                                        : "bg-yellow-100 text-yellow-800"
-                                      }`}
-                                  >
-                                    {testimonial.status}
-                                  </span>
-                                </td>
                                 <td className="py-3 px-4 text-gray-600">
                                   {new Date(testimonial.created_at).toLocaleDateString()}
                                 </td>
                                 <td className="py-3 px-4">
-                                  <div className="flex gap-2">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleEdit(testimonial)}
-                                      className="hover:bg-blue-50"
+                                  <div className="flex items-center gap-2">
+                                    <Select
+                                      value={rowStatuses[testimonial.id]}
+                                      onValueChange={(val: Testimonial["status"]) =>
+                                        setRowStatuses((prev) => ({ ...prev, [testimonial.id]: val }))
+                                      }
                                     >
-                                      <Edit2 className="w-4 h-4" />
+                                      <SelectTrigger className="w-28">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="pending">Pending</SelectItem>
+                                        <SelectItem value="approved">Approved</SelectItem>
+                                        <SelectItem value="rejected">Rejected</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+
+                                    <Button
+                                      size="sm"
+                                      variant="default"
+                                      onClick={async () => {
+                                        const statusToUpdate = rowStatuses[testimonial.id]
+                                        try {
+                                          const response = await fetch(`/api/testimonials/${testimonial.id}`, {
+                                            method: "PUT",
+                                            headers: { "Content-Type": "application/json" },
+                                            body: JSON.stringify({ status: statusToUpdate }),
+                                          })
+
+                                          const data = await response.json()
+                                          if (!response.ok) throw new Error(data.error || "Failed to update status")
+
+                                          toast({
+                                            title: "Success",
+                                            description: "Status updated successfully",
+                                          })
+
+                                          setTestimonials((prev) =>
+                                            prev.map((t) =>
+                                              t.id === testimonial.id ? { ...t, status: statusToUpdate } : t
+                                            )
+                                          )
+                                        } catch (error: any) {
+                                          console.error(error)
+                                          toast({
+                                            title: "Error",
+                                            description: error.message || "Failed to update status",
+                                            variant: "destructive",
+                                          })
+                                        }
+                                      }}
+                                    >
+                                      Save
                                     </Button>
+
                                     <Button
                                       variant="destructive"
                                       size="sm"
@@ -353,6 +316,7 @@ export default function TestimonialsAdmin() {
                                     </Button>
                                   </div>
                                 </td>
+
                               </tr>
                             ))}
                           </tbody>
@@ -402,9 +366,9 @@ export default function TestimonialsAdmin() {
                 </CardContent>
               </Card>
             </div>
-          </div>
+          </main>
         </div>
       </div>
-    </SidebarProvider>
+    </SidebarProvider >
   )
 }
